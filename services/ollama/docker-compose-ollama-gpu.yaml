@@ -1,0 +1,68 @@
+volumes:
+  ollama-models:
+  ollama-gpu:
+
+x-ollama-gpu: &ollama-gpu
+  image: ollama/ollama
+  container_name: ollama-gpu
+  restart: unless-stopped
+  ports:
+    - "11435:11434"
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  volumes:
+    - ollama-gpu:/root/.ollama
+    - ollama-models:/root/.ollama/models
+  environment:
+    - GIN_MODE=release
+
+x-ollama-gpu-pull: &ollama-gpu-pull
+  image: ollama/ollama
+  container_name: ollama-gpu-pull
+  volumes:
+    - ollama-gpu:/root/.ollama
+    - ollama-models:/root/.ollama/models
+  environment:
+    - OLLAMA_HOST=ollama-gpu:11434
+  entrypoint: /bin/sh
+  command:
+    - "-c"
+    - "sleep 5;
+      echo 'pulling nomic-embed-text'; ollama pull nomic-embed-text;
+      echo 'pulling llama3.2:1b'; ollama pull llama3.2:1b;
+      echo 'pulling llama3.2:3b'; ollama pull llama3.2:3b;
+      echo 'pulling llava:7b'; ollama pull llava:7b;
+      echo 'pulling llava:13b'; ollama pull llava:13b;
+      echo 'pulling llava-llama3:8b'; ollama pull llava-llama3:8b;
+      echo 'pulling llava-phi3:3.8b'; ollama pull llava-phi3:3.8b;
+      echo 'pulling qwen2.5:0.5b'; ollama pull qwen2.5:0.5b;
+      echo 'pulling qwen2.5:1.5b'; ollama pull qwen2.5:1.5b;
+      echo 'pulling qwen2.5:3b'; ollama pull qwen2.5:3b;
+      echo 'pulling qwen2.5:7b'; ollama pull qwen2.5:7b;
+      echo 'pulling qwen2.5-coder:0.5b'; ollama pull qwen2.5-coder:0.5b;
+      echo 'pulling qwen2.5-coder:1.5b'; ollama pull qwen2.5-coder:1.5b;
+      echo 'pulling qwen2.5-coder:3b'; ollama pull qwen2.5-coder:3b;
+      echo 'pulling qwen2.5-coder:7b'; ollama pull qwen2.5-coder:7b;
+      echo 'pulling deepseek-llm:7b'; ollama pull deepseek-llm:7b;
+      echo 'pulling deepseek-r1:1.5b'; ollama pull deepseek-r1:1.5b;
+      echo 'pulling deepseek-r1:7b'; ollama pull deepseek-r1:7b;
+      echo 'pulling deepseek-r1:8b'; ollama pull deepseek-r1:8b;
+      "
+
+services:  
+  ollama-gpu:
+    profiles: ["gpu-nvidia"]
+    <<: *ollama-gpu
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+  
+  ollama-gpu-pull:
+    profiles: ["gpu-nvidia"]
+    <<: *ollama-gpu-pull
+    depends_on:
+      - ollama-gpu

@@ -1,0 +1,15 @@
+# Docker data (Basado en tu configuración personalizada)
+.docker-data/
+data/
+
+# Variables de entorno (¡Muy importante!)
+.env
+*.env
+
+# Ollama models (Si están en el directorio del proyecto)
+**/ollama/models/
+
+# Logs y temporales
+*.log
+npm-debug.log*
+.DS_Store

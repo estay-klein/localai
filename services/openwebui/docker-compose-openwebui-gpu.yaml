@@ -1,0 +1,67 @@
+volumes:
+  #openwebui-cpu:
+  openwebui-gpu:
+  #ollama-cpu:
+  #ollama-gpu:
+
+x-openwebui-gpu: &openwebui-gpu
+  depends_on:
+    - traefik
+    - ollama-gpu
+  image: ghcr.io/open-webui/open-webui:main
+  container_name: openwebui-gpu
+  restart: unless-stopped
+  ports:
+    - "3031:8080"
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  environment:
+    - OLLAMA_BASE_URL=http://host.docker.internal:11435
+    - USE_CUDA_DOCKER=true
+    - DEFAULT_MODELS=deepsek-r1:8b
+    - DEFAULT_LOCALE=es
+    #- CORS_ALLOW_ORIGIN=localhost:3031
+  volumes:
+    - openwebui-gpu:/app/backend/data
+  labels:
+    traefik.enable: true
+    traefik.http.routers.openwebui-gpu.rule: Host(`open-gpu.localhost`)
+    traefik.http.routers.openwebui-gpu.entrypoints: web, websecure
+    traefik.http.services.openwebui-gpu.loadbalancer.server.port: 3031
+
+services:
+  openwebui-gpu:
+    profiles: ["gpu-nvidia"]
+    <<: *openwebui-gpu
+    environment:
+      - CORS_ALLOW_ORIGIN=http://localhost:*,http://host.docker.internal:*
+      - USER_AGENT=OpenWebUI-CPU/1.0
+    # AUTOMATIC1111-specific variables
+      - WEBUI_SECRET_KEY=localai
+      - OLLAMA_BASE_URL=http://host.docker.internal:11435
+      - USE_CUDA_DOCKER=true
+      - DEFAULT_MODELS=qwen2.5:1.5b
+      - DEFAULT_LOCALE=es
+      - WEBUI_URL=http://host.docker.internal:3031
+      - DISPLAY=${DISPLAY}                        # For GUI apps (optional)
+      - AUTOMATIC1111_URL=http://host.docker.internal:7860   # Dirección URL de AUTOMATIC1111
+      - API_FLAG=--api                            # Incluir el indicador `--api`
+      #- API_AUTH=username:password                # Cadena de autenticación de API
+      #- API_AUTH_FLAG=--api-auth                  # Incluir el indicador `--api-auth`
+      - SAMPLER=euler_a                           # Establecer Sampler
+      - SCHEDULER=normal                          # Establecer Programador
+      - CFG_SCALE=7                               # Establecer la escala CFG
+      - DEFAULT_MODELS=qwen2.5:0.5b               # Establecer modelo predeterminado
+      - IMAGE_SIZE=512x512                        # Establecer tamaño de imagen
+      - STEPS=20                                  # Establecer Pasos
+      - WEBUI_SECRET_KEY=localai
+      - DEFAULT_LOCALE=es
+    # ComfyUI-specific variables
+      - COMFYUI_PORT=8188              # Port for ComfyUI
+      - COMFYUI_MODELS_DIR=/opt/localai/services/comfyui/models  # Directory for ComfyUI models
+      - COMFYUI_OUTPUT_DIR=/opt/localai/services/comfyui/output  # Directory for ComfyUI outputs
+      - COMFYUI_EXTENSIONS_DIR=/opt/localai/services/comfyui/extensions  # Directory for ComfyUI extensions
+      - COMFYUI_LOG_LEVEL=INFO         # Log level for ComfyUI (DEBUG, INFO, WARNING, ERROR)
+      - COMFYUI_ENABLE_CORS=true       # Enable CORS for ComfyUI
+      - COMFYUI_API_KEY=your_api_key   # API key for ComfyUI (optional)
+      

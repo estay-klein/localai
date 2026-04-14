@@ -1,0 +1,88 @@
+volumes:
+  openwebui-cpu:
+
+x-openwebui-cpu: &openwebui-cpu
+  image: ghcr.io/open-webui/open-webui:main
+  container_name: openwebui-cpu
+  restart: unless-stopped
+  depends_on:
+    # - traefik # Descomenta solo si Traefik se levanta en este mismo archivo
+    - ollama-cpu
+  ports:
+    - "3030:8080"
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  volumes:
+    - openwebui-cpu:/app/backend/data
+  #labels:
+  #  traefik.enable: true
+  #  traefik.http.routers.openwebui-cpu.rule: Host(`open-cpu.localhost`)
+  #  traefik.http.routers.openwebui-cpu.entrypoints: web, websecure
+  #  # CORRECCIÓN CLAVE: Traefik debe apuntar al puerto interno de la app (8080)
+  #  traefik.http.services.openwebui-cpu.loadbalancer.server.port: 8080
+
+  labels:
+    traefik.enable: true
+    traefik.http.routers.openwebui-cpu.rule: Host(`open-cpu.localhost`)
+    traefik.http.routers.openwebui-cpu.entrypoints: web, websecure
+    traefik.http.services.openwebui-cpu.loadbalancer.server.port: 8080
+    
+    # ==========================================
+    # LAS ETIQUETAS MÁGICAS PARA STREAMING DE IA
+    # ==========================================
+    
+    # 1. Mantener la cabecera original (Vital para que los WebSockets de Open WebUI no se corten)
+    traefik.http.services.openwebui-cpu.loadbalancer.passhostheader: true
+    
+    # 2. Asignar un middleware personalizado que crearemos justo abajo
+    traefik.http.routers.openwebui-cpu.middlewares: ia-streaming
+    
+    # 3. Crear el middleware "ia-streaming": Desactiva el buffering de Traefik.
+    # Al poner el límite en 0, Traefik deja pasar el texto de Ollama palabra por palabra inmediatamente,
+    # evitando que la interfaz se quede en blanco y salte el error JSON.parse.
+    traefik.http.middlewares.ia-streaming.buffering.maxResponseBodyBytes: 0
+    traefik.http.middlewares.ia-streaming.buffering.maxRequestBodyBytes: 0
+
+services:
+  openwebui-cpu:
+    profiles: ["cpu"]
+    <<: *openwebui-cpu
+    environment:
+      # ==========================================
+      # VARIABLES ACTIVAS (Esenciales para funcionar)
+      # ==========================================
+      # CORRECCIÓN CLAVE: Esta es la única URL de Ollama que debe existir.
+      - OLLAMA_BASE_URL=http://ollama-cpu:11434
+      
+      - WEBUI_SECRET_KEY=UnaClaveSuperSecretaYFuerte # ¡Cámbiala por seguridad!
+      - USE_CUDA_DOCKER=false # Falso porque usas CPU
+      - DEFAULT_MODELS=qwen2.5:0.5b
+      - DEFAULT_LOCALE=es-ES # Formato correcto para español
+
+      # ==========================================
+      # VARIABLES INACTIVAS (Documentación Open WebUI)
+      # Elimina el '#' para activar la funcionalidad deseada.
+      # ==========================================
+
+      # --- Seguridad y Control de Usuarios ---
+      # - WEBUI_AUTH=true                 # Ponlo en 'false' si quieres entrar directo sin contraseña.
+      # - ENABLE_SIGNUP=true              # Ponlo en 'false' para evitar que otros se registren en tu web.
+      # - DEFAULT_USER_ROLE=pending       # Roles: 'admin', 'user', o 'pending' (requiere que el admin los apruebe).
+
+      # --- Conexión con Generadores de Imágenes (A1111 / ComfyUI) ---
+      # Open WebUI no usa las variables de LocalAI que tenías. Usa estas oficiales:
+      # - ENABLE_IMAGE_GENERATION=true
+      # - IMAGE_GENERATION_ENGINE=automatic1111 # Opciones: "automatic1111", "comfyui", "openai"
+      # - AUTOMATIC1111_BASE_URL=http://host.docker.internal:7860
+      # - COMFYUI_BASE_URL=http://host.docker.internal:8188
+      # - IMAGE_SIZE=512x512
+      # - IMAGE_STEPS=20
+
+      # --- Proveedores Externos (Si decides añadir más modelos además de Ollama) ---
+      # - OPENAI_API_BASE_URL=https://api.openai.com/v1
+      # - OPENAI_API_KEY=tu_clave_api_aqui
+      # - ANTHROPIC_API_KEY=tu_clave_api_aqui
+
+      # --- Red y CORS ---
+      # Generalmente no es necesario tocar esto a menos que tengas problemas con iframes o APIs externas.
+      # - CORS_ALLOW_ORIGIN=http://open-cpu.localhost,http://localhost:3030

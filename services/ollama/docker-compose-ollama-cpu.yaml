@@ -1,0 +1,68 @@
+volumes:
+  ollama-models:
+    # Volumen para guardar los modelos descargados de forma persistente
+  ollama-cpu:
+    # Volumen para la configuración interna de Ollama
+
+x-ollama-cpu: &ollama-cpu
+  image: ollama/ollama
+  container_name: ollama-cpu
+  restart: unless-stopped
+  ports:
+    - 11434:11434
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  volumes:
+    - ollama-cpu:/root/.ollama
+    - ollama-models:/root/.ollama/models
+  environment:
+    # ==========================================
+    # VARIABLES ACTIVAS (Necesarias para funcionar)
+    # ==========================================
+    - GIN_MODE=release                      # Silencia los logs innecesarios del servidor web interno de Ollama.
+    - OLLAMA_HOST=0.0.0.0                   # CRÍTICO: Permite que Ollama escuche peticiones de otros contenedores en la red (como Open WebUI).
+    - OLLAMA_ORIGINS=*                      # CRÍTICO: Evita bloqueos de seguridad (CORS) cuando Open WebUI intenta conectar.
+
+    # ==========================================
+    # VARIABLES INACTIVAS (Documentación general)
+    # Descomenta (quita el #) para usar alguna.
+    # ==========================================
+    # - OLLAMA_KEEP_ALIVE=5m                # Tiempo que un modelo se queda cargado en RAM tras usarlo (ej: "5m", "1h", o "-1" para siempre). Útil en CPU para evitar recargar.
+    # - OLLAMA_MODELS=/root/.ollama/models  # Ruta personalizada donde se guardan los modelos descargados.
+    # - OLLAMA_NUM_PARALLEL=1               # Cantidad de peticiones simultáneas que el modelo procesará. (1 es ideal para CPU).
+    # - OLLAMA_MAX_QUEUE=512                # Límite máximo de peticiones en lista de espera antes de rechazarlas.
+    # - OLLAMA_DEBUG=false                  # Cambia a "true" si necesitas ver logs de error súper detallados.
+    # - OLLAMA_MAX_VRAM=0                   # Límite de memoria de GPU a usar. (No aplica en tu caso porque usas CPU, pero 0 significa automático).
+    # - OLLAMA_NOHISTORY=false              # Si es "true", no guarda tu historial de prompts en el servidor.
+    # - OLLAMA_NOPRUNE=false                # Si es "true", evita que Ollama elimine archivos temporales antiguos al arrancar.
+    # - OLLAMA_TMPDIR=/tmp                  # Directorio donde Ollama crea archivos temporales mientras genera respuestas.
+
+x-ollama-cpu-pull: &ollama-cpu-pull
+  image: ollama/ollama
+  container_name: ollama-cpu-pull
+  volumes:
+    - ollama-cpu:/root/.ollama
+    - ollama-models:/root/.ollama/models
+  entrypoint: /bin/sh
+  # CAMBIO CLAVE: Se cambió 'host.docker.internal' por 'ollama-cpu'. 
+  # Ahora el contenedor 'pull' se comunica directamente con el contenedor principal usando la red interna de Docker.
+  command:
+    - "-c"
+    - "sleep 3; echo 'pulling nomic-embed-text'; OLLAMA_HOST=ollama-cpu:11434 ollama pull nomic-embed-text;
+      sleep 3; echo 'pulling deepseek-r1:1.5b'; OLLAMA_HOST=ollama-cpu:11434 ollama pull deepseek-r1:1.5b;
+      sleep 3; echo 'pulling llama3.2:1b'; OLLAMA_HOST=ollama-cpu:11434 ollama pull llama3.2:1b;
+      sleep 3; echo 'pulling llama3.2:3b'; OLLAMA_HOST=ollama-cpu:11434 ollama pull llama3.2:3b;
+      sleep 3; echo 'pulling qwen3.5:0.8b'; OLLAMA_HOST=ollama-cpu:11434 ollama pull qwen3.5:0.8b;
+      sleep 3; echo 'pulling qwen3.5:2b'; OLLAMA_HOST=ollama-cpu:11434 ollama pull qwen3.5:3b;
+      sleep 3; echo 'pulling qwen3.5:4b'; OLLAMA_HOST=ollama-cpu:11434 ollama pull qwen3.5:4b"
+
+services:  
+  ollama-cpu:
+    profiles: ["cpu"]
+    <<: *ollama-cpu
+
+  ollama-cpu-pull:
+    profiles: ["cpu"]
+    <<: *ollama-cpu-pull
+    depends_on:
+      - ollama-cpu
