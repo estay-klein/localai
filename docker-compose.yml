@@ -1,3 +1,10 @@
 networks:
   localai:
     driver: bridge
+
+include:
+- services/traefik/docker-compose-traefik.yaml
+- services/ollama/docker-compose-ollama-cpu.yaml
+- services/ollama/docker-compose-ollama-gpu.yaml
+- services/openwebui/docker-compose-openwebui-cpu.yaml
+- services/openwebui/docker-compose-openwebui-gpu.yaml
