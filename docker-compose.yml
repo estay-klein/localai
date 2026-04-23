@@ -1,0 +1,44 @@
+# =============================================================================
+# LocalAI Stack - Root Docker Compose Configuration
+# =============================================================================
+# This is the main composition file that orchestrates the entire LocalAI stack.
+# It defines the shared network and includes all service definitions from the
+# /services/ directory. Services are activated via Docker Compose profiles.
+#
+# Usage:
+#   docker compose up -d                     # Starts only the default services (traefik)
+#   docker compose --profile cpu up -d       # Starts CPU‑based services (ollama-cpu, openwebui-cpu)
+#   docker compose --profile gpu-nvidia up -d # Starts GPU‑accelerated services (ollama-gpu, openwebui-gpu)
+#
+# For a complete stack, combine profiles:
+#   docker compose --profile cpu --profile gpu-nvidia up -d
+#
+# Note: Some services (e.g., supervisord) need to be built from Dockerfiles.
+# Use the --build flag when starting for the first time or after changes:
+#   docker compose --profile cpu --profile gpu-nvidia up -d --build
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Shared Networks
+# -----------------------------------------------------------------------------
+# All services are attached to a common bridge network named 'LocalAI'.
+# This enables service‑to‑service communication using Docker's internal DNS
+# (e.g., 'ollama-cpu:11434' from another container).
+networks:
+  LocalAI:
+    driver: bridge
+
+# -----------------------------------------------------------------------------
+# Notes on Portability
+# -----------------------------------------------------------------------------
+# All persistent data paths are defined using the environment variable
+# LOCALAI_DATA (default: ../.LocalAI). This makes the stack independent of
+# the host user's home directory. Override LOCALAI_DATA in a .env file or via
+# the command line to store data elsewhere.
+#
+# Example .env entry:
+#   LOCALAI_DATA=/opt/LocalAI
+#
+# Each service's volume bindings reference ${LOCALAI_DATA}/... to ensure
+# consistent data location across different users and systems.
+# =============================================================================

@@ -1,0 +1,34 @@
+# Supervisord Container for LocalAI Stack
+# Provides process supervision for all Python/Bash scripts in a unified environment.
+
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    supervisor \
+    bash \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create directory structure
+RUN mkdir -p /var/log/supervisor \
+    && mkdir -p /etc/supervisor/conf.d \
+    && mkdir -p /app/scripts \
+    && mkdir -p /app/src
+
+# Copy supervisord configuration
+COPY services/supervisord/supervisord.conf /etc/supervisor/supervisord.conf
+
+# Copy application code (will be mounted as volume in production)
+COPY . /app
+
+# Install Python dependencies
+WORKDIR /app
+RUN if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
+
+# Expose Supervisord web interface
+EXPOSE 9001
+
+# Start supervisord
+CMD ["supervisord", "-c", "/etc/supervisor/supervisord.conf"]

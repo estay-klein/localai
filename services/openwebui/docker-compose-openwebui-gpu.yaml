@@ -1,0 +1,52 @@
+# Open WebUI GPU Service
+x-openwebui-gpu: &openwebui-gpu
+  image: ghcr.io/open-webui/open-webui:latest
+  container_name: openwebui-gpu
+  restart: unless-stopped
+  depends_on:
+    - traefik
+    - ollama-gpu
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: all
+            capabilities: [gpu]
+  ports:
+    - "3031:8080"
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  volumes:
+    - ${LOCALAI_DATA:-../.LocalAI}/services/openwebui-gpu:/app/backend/data
+  labels:
+    traefik.enable: true
+    traefik.http.routers.openwebui-gpu.rule: Host(`open-gpu.localhost`)
+    traefik.http.routers.openwebui-gpu.entrypoints: web, websecure
+    traefik.http.services.openwebui-gpu.loadbalancer.server.port: 8080
+    traefik.http.services.openwebui-gpu.loadbalancer.passhostheader: true
+    traefik.http.services.openwebui-gpu.loadbalancer.responseForwarding.flushInterval: -1
+    traefik.http.routers.openwebui-gpu.middlewares: ia-streaming-gpu
+    traefik.http.middlewares.ia-streaming-gpu.buffering.maxResponseBodyBytes: 0
+    traefik.http.middlewares.ia-streaming-gpu.buffering.maxRequestBodyBytes: 0
+    traefik.http.middlewares.ia-streaming-gpu.buffering.memResponseBodyBytes: 0
+services:
+  openwebui-gpu:
+    profiles: ["gpu-nvidia"]
+    <<: *openwebui-gpu
+    environment:
+      - OLLAMA_BASE_URL=http://ollama-gpu:11434
+      - WEBUI_SECRET_KEY=localai
+      - USE_CUDA_DOCKER=true
+      - DEFAULT_MODELS=qwen2.5:1.5b
+      - DEFAULT_LOCALE=en-US
+      - CHECK_UPDATE=false
+      - SHOW_ADMIN_DETAILS=false
+      #- CORS_ALLOW_ORIGIN=http://localhost:*,http://host.docker.internal:*
+      # Image generation configuration (commented out)
+      # - ENABLE_IMAGE_GENERATION=true
+      # - IMAGE_GENERATION_ENGINE=automatic1111
+      # - AUTOMATIC1111_BASE_URL=http://host.docker.internal:7860
+      # - COMFYUI_BASE_URL=http://host.docker.internal:8188
+      # - IMAGE_SIZE=512x512
+      # - IMAGE_STEPS=20

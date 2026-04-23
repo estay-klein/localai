@@ -1,0 +1,38 @@
+# Open WebUI CPU Service
+x-openwebui-cpu: &openwebui-cpu
+  image: ghcr.io/open-webui/open-webui:latest
+  container_name: openwebui-cpu
+  restart: unless-stopped
+  depends_on:
+    - ollama-cpu
+  ports:
+    - "3030:8080"
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  volumes:
+    - ${LOCALAI_DATA:-../.LocalAI}/services/openwebui-cpu:/app/backend/data
+  labels:
+    traefik.enable: true
+    traefik.http.routers.openwebui-cpu.rule: Host(`open-cpu.localhost`)
+    traefik.http.routers.openwebui-cpu.entrypoints: web, websecure
+    traefik.http.services.openwebui-cpu.loadbalancer.server.port: 8080
+    traefik.http.services.openwebui-cpu.loadbalancer.passhostheader: true
+    traefik.http.services.openwebui-cpu.loadbalancer.responseForwarding.flushInterval: -1
+    traefik.http.routers.openwebui-cpu.middlewares: ia-streaming-cpu
+    traefik.http.middlewares.ia-streaming-cpu.buffering.maxResponseBodyBytes: 0
+    traefik.http.middlewares.ia-streaming-cpu.buffering.maxRequestBodyBytes: 0
+    traefik.http.middlewares.ia-streaming-gpu.buffering.memResponseBodyBytes: 0
+
+
+services:
+  openwebui-cpu:
+    profiles: ["cpu"]
+    <<: *openwebui-cpu
+    environment:
+      - OLLAMA_BASE_URL=http://ollama-cpu:11434
+      - WEBUI_SECRET_KEY=UnaClaveSuperSecretaYFuerte
+      - USE_CUDA_DOCKER=false
+      - DEFAULT_MODELS=qwen2.5:0.5b
+      - DEFAULT_LOCALE=en-US
+      - CHECK_UPDATE=false
+      - SHOW_ADMIN_DETAILS=false

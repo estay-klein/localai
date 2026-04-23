@@ -1,0 +1,105 @@
+# =============================================================================
+# Redis Service for LocalAI Stack
+# =============================================================================
+# This service runs Redis, an in‑memory data structure store used as a cache,
+# message broker, and temporary storage for scripts and agents.
+#
+# Redis is exposed internally on the `LocalAI` network and can be accessed by
+# other containers (e.g., supervisord scripts) at `redis:6379`. It is not
+# exposed to the public internet; all traffic stays within the Docker network.
+#
+# The service persists data to disk using Append‑Only File (AOF) mode, ensuring
+# durability across container restarts.
+#
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Anchor definition for the Redis container
+# -----------------------------------------------------------------------------
+x-redis: &redis
+  # Official Redis 7 Alpine image (small, secure, and production‑ready)
+  image: redis:7-alpine
+  container_name: redis
+  restart: unless-stopped
+
+  # Attach to the shared `LocalAI` network for inter‑service communication
+  networks:
+    - LocalAI
+
+  # Expose Redis on the standard port 6379 (host mapping for debugging)
+  # Note: In production, you may want to remove the host mapping and rely solely
+  # on internal Docker networking for security.
+  ports:
+    - "6379:6379"
+
+  # -------------------------------------------------------------------------
+  # Persistent volume
+  # -------------------------------------------------------------------------
+  # Redis data directory (AOF and RDB files) is stored under ${LOCALAI_DATA}.
+  volumes:
+    - ${LOCALAI_DATA:-../.LocalAI}/data/redis:/data
+
+  # -------------------------------------------------------------------------
+  # Command‑line arguments
+  # -------------------------------------------------------------------------
+  # --appendonly yes   : Enable Append‑Only File persistence (every write is logged)
+  # --requirepass ...  : Set a password for client authentication (default: "password")
+  command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-password}
+
+  # -------------------------------------------------------------------------
+  # Environment variables
+  # -------------------------------------------------------------------------
+  environment:
+    # Password for client authentication. Override via .env or command line.
+    - REDIS_PASSWORD=${REDIS_PASSWORD:-password}
+    # Port Redis listens on (must match the port mapping above)
+    - REDIS_PORT=6379
+
+  # -------------------------------------------------------------------------
+  # Traefik labels
+  # -------------------------------------------------------------------------
+  # Redis is an internal service; we explicitly disable Traefik routing.
+  labels:
+    traefik.enable: false
+
+# -----------------------------------------------------------------------------
+# Service definition
+# -----------------------------------------------------------------------------
+services:
+  redis:
+    <<: *redis                     # Inherits the anchor definition above
+
+# -----------------------------------------------------------------------------
+# Network configuration
+# -----------------------------------------------------------------------------
+# The service uses the "LocalAI" network defined in the root docker‑compose.yml file.
+networks:
+  LocalAI:
+
+# =============================================================================
+# Usage Notes
+# =============================================================================
+# 1. After starting the stack, other containers can connect to Redis using
+#    the hostname `redis` and port `6379`.
+#
+# 2. To connect from a host tool (e.g., redis‑cli) for debugging:
+#      redis‑cli -h localhost -p 6379 -a password
+#
+# 3. The default password is "password". Change it by setting the environment
+#    variable REDIS_PASSWORD in your .env file:
+#      REDIS_PASSWORD=your_strong_password_here
+#
+# 4. Persistence is enabled via AOF. Data survives container restarts as long
+#    as the volume (`${LOCALAI_DATA}/data/redis`) is not deleted.
+#
+# 5. If you change LOCALAI_DATA in your .env file, ensure the target directory
+#    (`data/redis/`) exists and has appropriate permissions.
+#
+# 6. For production deployments, consider:
+#    - Removing the host port mapping (`ports` section) to prevent external access.
+#    - Using a more complex password (mix of letters, numbers, symbols).
+#    - Configuring Redis memory limits (`maxmemory`) and eviction policies.
+#
+# 7. To monitor Redis, you can exec into the container and run `redis‑cli monitor`
+#    or use a GUI tool like RedisInsight.
+# =============================================================================

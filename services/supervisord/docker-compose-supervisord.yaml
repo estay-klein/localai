@@ -1,0 +1,138 @@
+# =============================================================================
+# Supervisord Service for LocalAI Stack
+# =============================================================================
+# This service provides unified process supervision for all Python/Bash scripts
+# that implement business logic, agent workflows, data pipelines, and automation.
+#
+# The container is built from a custom Dockerfile (`services/supervisord/Dockerfile.supervisord`)
+# that sets up a Python environment, installs supervisord, and prepares the
+# runtime. All scripts are mounted from the host, allowing live editing without
+# rebuilding the container.
+#
+# Supervisord manages each script as a separate process, automatically restarting
+# them on failure, and provides a web GUI for monitoring (available via Traefik
+# at `supervisord.localhost`).
+#
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Anchor definition for the Supervisord container
+# -----------------------------------------------------------------------------
+x-supervisord: &supervisord
+  # Build the container from the project‑root Dockerfile
+  build:
+    context: ../..                     # Project root (where docker‑compose.yml lives)
+    dockerfile: services/supervisord/Dockerfile.supervisord
+
+  container_name: supervisord
+  restart: unless-stopped
+
+  # Attach to the shared `LocalAI` network for inter‑service communication
+  networks:
+    - LocalAI
+
+  # -------------------------------------------------------------------------
+  # Persistent volumes
+  # -------------------------------------------------------------------------
+  volumes:
+    # Mount host scripts directory (read‑only)
+    # Scripts placed in ${LOCALAI_DATA}/scripts will be visible inside the container.
+    - ${LOCALAI_DATA:-../.LocalAI}/scripts:/app/scripts:ro
+
+    # Mount host data directory (read‑write)
+    # Script outputs, logs, and temporary files can be stored here.
+    - ${LOCALAI_DATA:-../.LocalAI}/data:/app/data:rw
+
+    # Mount source code directory (read‑only)
+    # The /src directory contains modular Python packages used by scripts.
+    - ../../src:/app/src:ro
+
+    # Mount supervisord main configuration file (optional)
+    # If you need to customize supervisord's global settings, edit
+    # `services/supervisord/supervisord.conf` on the host.
+    - ../../services/supervisord/supervisord.conf:/etc/supervisor/supervisord.conf:ro
+
+    # Mount program configuration directory
+    # Each script/process is defined by a .conf file in `./conf.d/`.
+    # Adding a new .conf file here will automatically register a new process.
+    - ./conf.d:/etc/supervisor/conf.d:ro
+
+  # -------------------------------------------------------------------------
+  # Environment variables
+  # -------------------------------------------------------------------------
+  environment:
+    # Ensure Python prints output immediately (no buffering)
+    - PYTHONUNBUFFERED=1
+    # Credentials for the supervisord web GUI (change in production!)
+    - SUPERVISORD_USERNAME=admin
+    - SUPERVISORD_PASSWORD=localai
+    # Timezone (UTC by default; adjust to match your location)
+    - TZ=UTC
+
+  # -------------------------------------------------------------------------
+  # Traefik labels (automatic reverse‑proxy configuration)
+  # -------------------------------------------------------------------------
+  labels:
+    # Enable Traefik discovery for this service
+    traefik.enable: true
+    # Route requests for supervisord.localhost to this container
+    traefik.http.routers.supervisord.rule: Host(`supervisord.localhost`)
+    # Use both HTTP and HTTPS entry points
+    traefik.http.routers.supervisord.entrypoints: web, websecure
+    # Internal port of the supervisord HTTP server (default is 9001)
+    traefik.http.services.supervisord.loadbalancer.server.port: 9001
+    # Keep the original host header (important for some web GUI features)
+    traefik.http.services.supervisord.loadbalancer.passhostheader: true
+
+    # Security: restrict access to internal network (optional)
+    # Uncomment and define an auth middleware to protect the GUI.
+    # traefik.http.routers.supervisord.middlewares: auth
+
+# -----------------------------------------------------------------------------
+# Service definition
+# -----------------------------------------------------------------------------
+services:
+  supervisord:
+    <<: *supervisord                  # Inherits the anchor definition above
+
+    # No need to expose ports externally because Traefik routes traffic.
+    # Uncomment the following lines for direct access (without Traefik) during debugging.
+    # ports:
+    #   - "9001:9001"  # Exposed only for debugging without Traefik
+
+# -----------------------------------------------------------------------------
+# Network configuration
+# -----------------------------------------------------------------------------
+# The service uses the "LocalAI" network defined in the root docker‑compose.yml file.
+networks:
+  LocalAI:
+
+# =============================================================================
+# Usage Notes
+# =============================================================================
+# 1. After starting the stack, access the Supervisord GUI at:
+#      https://supervisord.localhost   (via Traefik, requires HTTPS)
+#
+# 2. Log in with the credentials defined above:
+#      Username: admin
+#      Password: localai
+#
+# 3. To add a new supervised process:
+#    a) Place your executable script in ${LOCALAI_DATA}/scripts/
+#    b) Create a .conf file in `services/supervisord/conf.d/` following the
+#       supervisord configuration syntax (see `example.conf` for a template).
+#    c) Restart the supervisord container or send a HUP signal.
+#
+# 4. The container shares the same Python environment for all scripts.
+#    Install additional Python packages by editing `services/supervisord/Dockerfile.supervisord`
+#    and rebuilding the image.
+#
+# 5. Scripts can communicate with other services (Ollama, Redis, etc.) using
+#    Docker's internal DNS (e.g., `ollama-cpu:11434`, `redis:6379`).
+#
+# 6. If you change LOCALAI_DATA in your .env file, ensure the target directories
+#    (`scripts/`, `data/`) exist and have appropriate permissions.
+#
+# 7. For production, change the default GUI credentials and consider enabling
+#    Traefik middleware authentication.
+# =============================================================================
