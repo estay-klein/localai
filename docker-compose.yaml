@@ -12,3 +12,4 @@ include:
   - services/pgvector/docker-compose-pgvector.yaml
   - services/mkdocs/docker-compose-mkdocs.yaml
   - services/stable-diffusion/docker-compose-stable-diffusion.yaml
+  - services/comfyui/docker-compose-comfyui.yaml
