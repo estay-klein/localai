@@ -41,3 +41,46 @@ services:
       - DEFAULT_LOCALE=en-US
       - CHECK_UPDATE=false
       - SHOW_ADMIN_DETAILS=false
+      - ENABLE_IMAGE_GENERATION=true
+      - IMAGE_GENERATION_ENGINE=comfyui
+      - COMFYUI_BASE_URL=http://comfyui:8188
+      - SDWEBUI_BASE_URL=http://stable-diffusion-webui:7860
+      - DEFAULT_IMAGE_MODEL=anything-v5-PrtRE.safetensors
+
+  comfyui:
+    profiles: ["gpu-nvidia"]
+    image: runpod/comfyui:latest
+    container_name: comfyui
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    ports:
+      - "8188:8188"
+    volumes:
+      - ${LOCALAI_DATA:-../.LocalAI}/services/comfyui:/workspace
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+
+  stable-diffusion-webui:
+    profiles: ["gpu-nvidia"]
+    image: runpod/stable-diffusion-webui:latest
+    container_name: stable-diffusion-webui
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    ports:
+      - "7860:7860"
+    volumes:
+      - ${LOCALAI_DATA:-../.LocalAI}/services/stable-diffusion-webui:/workspace
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
