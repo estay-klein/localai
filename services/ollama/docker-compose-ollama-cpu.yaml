@@ -1,0 +1,11 @@
+services:
+  ollama-cpu:
+    profiles: ["cpu"]
+    image: ollama/ollama:latest
+    container_name: ollama-cpu
+    restart: unless-stopped
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+      - OLLAMA_KEEP_ALIVE=24h
+    volumes:
+      - ${LOCALAI_DATA:-../.LocalAI}/services/ollama-cpu:/root/.ollama
