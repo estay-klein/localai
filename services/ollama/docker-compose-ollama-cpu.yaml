@@ -7,8 +7,8 @@ x-ollama-cpu: &ollama-cpu
   extra_hosts:
     - "host.docker.internal:host-gateway"
   volumes:
-    - ${LOCALAI_DATA:-../.LocalAI}/services/ollama-cpu:/root/.ollama
-    - ${LOCALAI_DATA:-../.LocalAI}/models/ollama:/root/.ollama/models
+    - ${LOCALAI_DATA:-../../.LocalAI}/services/ollama-cpu:/root/.ollama
+    - ${LOCALAI_DATA:-../../.LocalAI}/models/ollama:/root/.ollama/models
   environment:
     - GIN_MODE=release
     - OLLAMA_HOST=0.0.0.0
@@ -18,8 +18,8 @@ x-ollama-cpu-pull: &ollama-cpu-pull
   image: ollama/ollama:latest
   container_name: ollama-cpu-pull
   volumes:
-    - ${LOCALAI_DATA:-../.LocalAI}/services/ollama-cpu:/root/.ollama
-    - ${LOCALAI_DATA:-../.LocalAI}/models/ollama:/root/.ollama/models
+    - ${LOCALAI_DATA:-../../.LocalAI}/services/ollama-cpu:/root/.ollama
+    - ${LOCALAI_DATA:-../../.LocalAI}/models/ollama:/root/.ollama/models
   environment:
     - OLLAMA_HOST=ollama-cpu:11434
   entrypoint: /bin/sh

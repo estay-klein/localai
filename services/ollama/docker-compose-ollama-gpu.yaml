@@ -7,8 +7,8 @@ x-ollama-gpu: &ollama-gpu
   extra_hosts:
     - "host.docker.internal:host-gateway"
   volumes:
-    - ${LOCALAI_DATA:-../.LocalAI}/services/ollama-gpu:/root/.ollama
-    - ${LOCALAI_DATA:-../.LocalAI}/models/ollama:/root/.ollama/models
+    - ${LOCALAI_DATA:-../../.LocalAI}/services/ollama-gpu:/root/.ollama
+    - ${LOCALAI_DATA:-../../.LocalAI}/models/ollama:/root/.ollama/models
   environment:
     - GIN_MODE=release
     - OLLAMA_HOST=0.0.0.0
@@ -18,8 +18,8 @@ x-ollama-gpu-pull: &ollama-gpu-pull
   image: ollama/ollama:latest
   container_name: ollama-gpu-pull
   volumes:
-    - ${LOCALAI_DATA:-../.LocalAI}/services/ollama-gpu:/root/.ollama
-    - ${LOCALAI_DATA:-../.LocalAI}/models/ollama:/root/.ollama/models
+    - ${LOCALAI_DATA:-../../.LocalAI}/services/ollama-gpu:/root/.ollama
+    - ${LOCALAI_DATA:-../../.LocalAI}/models/ollama:/root/.ollama/models
   environment:
     - OLLAMA_HOST=ollama-gpu:11434
   entrypoint: /bin/sh

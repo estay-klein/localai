@@ -7,7 +7,7 @@ x-pgvector: &pgvector
     - "5434:5432"
 
   volumes:
-    - ${LOCALAI_DATA:-../.LocalAI}/data/pgvector:/var/lib/postgresql/data
+    - ${LOCALAI_DATA:-../../.LocalAI}/data/pgvector:/var/lib/postgresql/data
 
   environment:
     - POSTGRES_DB=${PGVECTOR_DB:-vector}

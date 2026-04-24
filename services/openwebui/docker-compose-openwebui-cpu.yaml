@@ -9,7 +9,7 @@ x-openwebui-cpu: &openwebui-cpu
   extra_hosts:
     - "host.docker.internal:host-gateway"
   volumes:
-    - ${LOCALAI_DATA:-../.LocalAI}/services/openwebui-cpu:/app/backend/data
+    - ${LOCALAI_DATA:-../../.LocalAI}/services/openwebui-cpu:/app/backend/data
   labels:
     traefik.enable: true
     traefik.http.routers.openwebui-cpu.rule: Host(`open-cpu.localhost`)
