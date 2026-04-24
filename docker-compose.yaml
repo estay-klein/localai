@@ -1,0 +1,14 @@
+networks:
+  local-ai:
+    driver: bridge
+include:
+  - services/traefik/docker-compose-traefik.yaml
+  - services/ollama/docker-compose-ollama-cpu.yaml
+  - services/ollama/docker-compose-ollama-gpu.yaml
+  - services/openwebui/docker-compose-openwebui-cpu.yaml
+  - services/openwebui/docker-compose-openwebui-gpu.yaml
+  - services/postgres/docker-compose-postgres.yaml
+  - services/timescaledb/docker-compose-timescaledb.yaml
+  - services/pgvector/docker-compose-pgvector.yaml
+  - services/mkdocs/docker-compose-mkdocs.yaml
+  - services/stable-diffusion/docker-compose-stable-diffusion.yaml
