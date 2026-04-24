@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""
-Example script for Supervisord.
-This script runs indefinitely, printing a heartbeat every 10 seconds.
-"""
 
 import time
 import sys

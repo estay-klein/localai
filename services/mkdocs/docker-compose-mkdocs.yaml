@@ -1,0 +1,27 @@
+x-mkdocs: &mkdocs
+  build:
+    #context: ../..
+    dockerfile: services/mkdocs/Dockerfile
+  container_name: mkdocs
+  restart: unless-stopped
+
+  ports:
+    - "8001:8000"
+
+  volumes:
+    - ../../mkdocs.yml:/docs/mkdocs.yml:rw
+    - ../../docs:/docs/docs:rw
+
+  working_dir: /docs
+  command: serve -a 0.0.0.0:8000
+
+  labels:
+    traefik.enable: true
+    traefik.http.routers.mkdocs.rule: Host(`mkdocs.localhost`)
+    traefik.http.routers.mkdocs.entrypoints: web, websecure
+    traefik.http.services.mkdocs.loadbalancer.server.port: 8000
+    traefik.http.services.mkdocs.loadbalancer.passhostheader: true
+
+services:
+  mkdocs:
+    <<: *mkdocs

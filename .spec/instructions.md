@@ -11,6 +11,9 @@
 - **Process Supervision:** All project scripts must be executed within an independent, dedicated Docker container. Inside this container, all script executions must be managed and monitored by `supervisord`, with its Web GUI enabled for visual tracking.
 - **Shared Environment:** All scripts running within the `supervisord` container must share a single, unified Python environment.
 - **Microservices & Modularity:** Adopt a strict microservices approach for scripting. Minimize the size of individual files by heavily isolating functions, classes, and logic into separate, independent files. This is mandatory to facilitate continuous improvement and targeted debugging.
+- **Single-Line Service Selection:** The `.env` variable `COMPOSE_FILE` is the canonical mechanism for selecting which services are part of the active stack. To add or remove services, edit this single line by appending or removing `services/<service>/docker-compose-*.yaml` entries.
+- **Documentation-First Explanations:** Keep implementation and compose files free of explanatory comments. All explanations, runbooks, architecture notes, and API behavior must live in MkDocs and OpenAPI documentation.
+- **Compose Network Simplification:** Service-level compose files must not declare an explicit shared network. The stack must rely on the default network created by the merged `COMPOSE_FILE` project.
 
 ## 3. Data Persistence & Security
 - **Strict Host Pathing:** All persistent volumes, private information, git-ignored files, `.env` variables, secrets, and keys MUST live completely outside the repository code, specifically in a dedicated directory **sibling to the project root** (not inside the project). This ensures the project remains portable and free of large model files.
@@ -51,7 +54,7 @@
 ---
 
 ### Implementation Instructions for the Agent:
-> Review this Constitution prior to any code generation. Any proposal utilizing `snap`/`flatpak`, external cloud AI APIs, or languages other than Python/Bash without permission is a direct violation. Ensure all `docker-compose` files are placed in `/services/` and all persistent data targets `${LOCALAI_DATA}/`. Do not proceed until `.spec/tasks.md` accurately reflects the current objective. **After completing a task, update `Readme.md` to reflect the changes and keep the project documentation up‑to‑date.**
+> Review this Constitution prior to any code generation. Any proposal utilizing `snap`/`flatpak`, external cloud AI APIs, or languages other than Python/Bash without permission is a direct violation. Ensure all `docker-compose` files are placed in `/services/` and all persistent data targets `${LOCALAI_DATA}/`. For stack composition changes, update `.env` `COMPOSE_FILE` as the authoritative service list. Keep explanatory content in MkDocs/OpenAPI instead of inline comments. Do not proceed until `.spec/tasks.md` accurately reflects the current objective. **After completing a task, update `Readme.md` to reflect the changes and keep the project documentation up‑to‑date.**
 
 ### Notes on Portability (Added 2026‑04‑19)
 The project now uses the environment variable `LOCALAI_DATA` (default: `../.LocalAI`) to determine where persistent data is stored. This makes the stack **independent of the host user's home directory** and allows easy sharing across different users and systems.

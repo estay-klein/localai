@@ -22,6 +22,8 @@
 | openwebui‑cpu | Web UI for LLMs (CPU) | ghcr.io/open‑webui/open‑webui:main | 3030→8080 | `${LOCALAI_DATA}/services/openwebui` | No | cpu |
 | n8n | Workflow Automation | n8nio/n8n:latest | 5678 | `${LOCALAI_DATA}/services/n8n` | No | – |
 | postgres | Primary Database | postgres:16 | 5432 | `${LOCALAI_DATA}/data/postgres` | No | – |
+| timescaledb | Time-Series Database | timescale/timescaledb:latest-pg16 | 5433→5432 | `${LOCALAI_DATA}/data/timescaledb` | No | – |
+| pgvector | Vector-Enabled PostgreSQL | pgvector/pgvector:pg16 | 5434→5432 | `${LOCALAI_DATA}/data/pgvector` | No | – |
 | redis | In‑Memory Cache | redis:7‑alpine | 6379 | `${LOCALAI_DATA}/data/redis` | No | – |
 | qdrant | Vector Database | qdrant/qdrant:latest | 6333 | `${LOCALAI_DATA}/data/qdrant` | No | – |
 | jaeger | Distributed Tracing | jaegertracing/all‑in‑one:latest | 16686 | – | No | – |
@@ -33,14 +35,15 @@
 | localai | Local AI API (Go‑based) – open‑source models with fine‑tuning | localai/localai:latest | 8080 | `${LOCALAI_DATA}/models/localai` | Yes | – |
 | localai‑dashboard | Dashboard & Monitoring (FastAPI+Jinja2) | custom build | 8081 | `${LOCALAI_DATA}/services/localai‑dashboard` | No | – |
 | swagger‑ui | Unified API Documentation | swaggerapi/swagger‑ui | 8082 | – | No | – |
+| mkdocs | Documentation Site (Material for MkDocs + embedded Swagger UI) | custom build (`services/mkdocs/Dockerfile`) | 8001→8000 | `./docs`, `./mkdocs.yml` | No | – |
 | browseruse | Browser Automation | browseruse/browseruse:latest | 3003 | – | No | – |
 | perplexica | Perplexity‑style Search | perplexica/perplexica:latest | 3004 | `${LOCALAI_DATA}/data/perplexica` | No | – |
 | supervisord | Process Supervision | custom build | 9001 | `${LOCALAI_DATA}/scripts`, `${LOCALAI_DATA}/data` | No | – |
 
 ## 4. Network Topology
-- **Network Name:** `LocalAI` (driver: bridge)
+- **Compose Project Network:** Services rely on the default network created by the merged `COMPOSE_FILE` project.
 - **Traefik** acts as the single entry point; all external traffic routes through it.
-- **Internal service‑to‑service communication** uses Docker DNS (`service‑name`) over the `LocalAI` network.
+- **Internal service‑to‑service communication** uses Docker DNS (`service‑name`) on the shared Compose project network.
 - **GPU‑capable services** are placed on the `gpu‑nvidia` Docker profile and require explicit device passthrough.
 - **CPU‑only services** use the `cpu` profile. The stack supports only these two profiles (`cpu` and `gpu‑nvidia`).
 
@@ -58,6 +61,8 @@ ${LOCALAI_DATA} (default: ../.LocalAI)
 │   └── [service‑name]/  # Other service‑specific data
 ├── data/
 │   ├── postgres/        # PostgreSQL database files
+│   ├── timescaledb/     # TimescaleDB database files
+│   ├── pgvector/        # pgvector PostgreSQL database files
 │   ├── redis/           # Redis RDB/AOF files
 │   ├── qdrant/          # Qdrant collections
 │   └── [service]/       # Persistent data for other services
@@ -75,6 +80,10 @@ All sensitive configuration is stored in `.env` files outside the repository (in
 
 **Key variable:**
 - `LOCALAI_DATA` – root directory for all persistent data (default: `../.LocalAI`). Override this to place data elsewhere (e.g., `/opt/LocalAI`). This variable ensures **portability**: the project can exist in `/home/$user/LocalAI` while all persistent volumes reside in a sibling folder (`../.LocalAI`). **No giant models should ever be placed inside the project directory** – they belong under `${LOCALAI_DATA}/models/`.
+- `COMPOSE_FILE` – canonical stack composition list. This variable must include `docker-compose.yml` plus the selected service compose files under `/services/`. Users should enable or disable services by editing this single line (add/remove file paths separated by `:`), without changing core orchestration files.
+- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` – credentials for the PostgreSQL service.
+- `TIMESCALEDB_DB`, `TIMESCALEDB_USER`, `TIMESCALEDB_PASSWORD` – credentials for the TimescaleDB service.
+- `PGVECTOR_DB`, `PGVECTOR_USER`, `PGVECTOR_PASSWORD` – credentials for the pgvector service.
 
 ## 7. Supervisord Configuration
 - **Container:** `supervisord‑container` (built from `/services/supervisord/Dockerfile.supervisord`)
@@ -107,8 +116,11 @@ All sensitive configuration is stored in `.env` files outside the repository (in
 - **Agent Framework:** Pi Agent (Python‑based)
 - **Vector DB:** Qdrant
 - **Relational DB:** PostgreSQL
+- **Time-Series DB:** TimescaleDB
+- **Vector SQL DB:** PostgreSQL + pgvector
 - **Cache:** Redis
 - **Monitoring:** Grafana + Jaeger
+- **Documentation:** Material for MkDocs + embedded Swagger UI (`mkdocs-swagger-ui-tag`)
 - **Scripting:** Python 3.11+ (PEP 8, type‑hinted), Bash (with `set -eou pipefail`)
 
 ## 10. Dashboard & Monitoring
@@ -127,18 +139,18 @@ A custom web application built with **FastAPI + Jinja2** that serves as the prim
 - It communicates with the Docker daemon via the Docker socket (mounted read‑only) to obtain container status and metrics.
 - The dashboard is exposed via Traefik at `dashboard.localhost` (port 8081) and does not require a separate profile.
 
-### 10.2 Swagger UI
-A standalone **Swagger UI** container provides unified, interactive API documentation for all RESTful services in the stack. It is configured to aggregate OpenAPI specifications from each service (where available) and present them in a single, searchable interface.
+### 10.2 Swagger UI Integration
+Swagger UI is integrated directly into the MkDocs site using the `mkdocs-swagger-ui-tag` plugin. This keeps narrative documentation and interactive API exploration under one documentation portal.
 
 **Purpose:**
 - Centralized API documentation for developers and integrators.
 - Live testing of endpoints directly from the browser.
-- Automatic discovery of service APIs via Traefik labels.
+- Unified navigation with architecture and operations docs in one site.
 
 **Deployment:**
-- Uses the official `swaggerapi/swagger‑ui` image.
-- Exposed via Traefik at `docs.localhost` (port 8082).
-- No persistent data required.
+- Provided by the MkDocs container (`services/mkdocs/docker-compose-mkdocs.yaml`).
+- OpenAPI source path: `docs/specs/openapi.yaml`.
+- Embedded page: `docs/api-reference.md`.
 
 ## 11. Compliance & Constraints
 - **No `snap`/`flatpak`** – use `apt` or direct binaries.
@@ -147,6 +159,8 @@ A standalone **Swagger UI** container provides unified, interactive API document
 - **GPU‑dependent services** must include explicit GPU passthrough configuration.
 - **Python/Bash** are the default languages; any other language requires explicit permission.
 - **Portable paths** – all volume bindings must use `${LOCALAI_DATA}` to ensure the stack works for any user. The project must exist in `/home/$user/LocalAI` while all persistent volumes reside in a sibling folder (`../.LocalAI`). **No giant models inside the project directory** – they belong under `${LOCALAI_DATA}/models/`.
+- **No Inline Explanatory Comments** – Explanations must be kept in MkDocs/OpenAPI documentation, not in service or source files.
+- **No Explicit Shared Network Blocks in Service Compose Files** – Service-level compose files must rely on the merged `COMPOSE_FILE` project network.
 
 ---
 

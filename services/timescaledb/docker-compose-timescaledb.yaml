@@ -1,0 +1,23 @@
+x-timescaledb: &timescaledb
+  image: timescale/timescaledb:latest-pg16
+  container_name: timescaledb
+  restart: unless-stopped
+
+  ports:
+    - "5433:5432"
+
+  volumes:
+    - ${LOCALAI_DATA:-../.LocalAI}/data/timescaledb:/var/lib/postgresql/data
+
+  environment:
+    - POSTGRES_DB=${TIMESCALEDB_DB:-timescale}
+    - POSTGRES_USER=${TIMESCALEDB_USER:-timescale}
+    - POSTGRES_PASSWORD=${TIMESCALEDB_PASSWORD:-timescale}
+    - TZ=UTC
+
+  labels:
+    traefik.enable: false
+
+services:
+  timescaledb:
+    <<: *timescaledb

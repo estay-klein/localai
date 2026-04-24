@@ -76,10 +76,56 @@ Key architectural principles:
 | openwebui‑cpu | Web UI (CPU) | `ghcr.io/open‑webui/open‑webui:main` | 3030 | `~/.LocalAI/services/openwebui` |
 | openwebui‑gpu | Web UI (GPU) | `ghcr.io/open‑webui/open‑webui:main` | 3031 | `~/.LocalAI/services/openwebui` |
 | supervisord | Process Supervisor | Custom (see `docker/Dockerfile.supervisord`) | 9001 | `~/.LocalAI/scripts` |
+| postgres | Relational Database | `postgres:16` | 5432 | `~/.LocalAI/data/postgres` |
+| timescaledb | Time-Series Database | `timescale/timescaledb:latest-pg16` | 5433 | `~/.LocalAI/data/timescaledb` |
+| pgvector | Vector-Enabled PostgreSQL | `pgvector/pgvector:pg16` | 5434 | `~/.LocalAI/data/pgvector` |
+| mkdocs | Documentation Site (Material for MkDocs) | `squidfunk/mkdocs-material:latest` | 8001 | `./docs`, `./mkdocs.yml` |
 | redis | In‑Memory Cache | `redis:7‑alpine` | 6379 | `~/.LocalAI/data/redis` |
 | *[many more]* | … | … | … | … |
 
-> **Note:** The project includes placeholders for many additional services (PostgreSQL, Qdrant, n8n, Jaeger, Grafana, etc.). Uncomment the corresponding lines in `docker‑compose.yml` and create the missing service definitions under `/services/` to enable them.
+> **Note:** Service activation is controlled by `.env` → `COMPOSE_FILE`. Add or remove service compose files in that single line (colon-separated) to customize the stack for your environment.
+
+### Service Selection (Single Line)
+
+The stack composition is defined by the `COMPOSE_FILE` variable in `.env`.
+
+- Add a service: append `:services/<service>/docker-compose-<service>.yaml`
+- Remove a service: delete its path from `COMPOSE_FILE`
+- Keep `docker-compose.yml` as the first entry
+
+### Compose Network Behavior
+
+Service compose files do not declare an explicit shared network.
+
+- The merged `COMPOSE_FILE` project creates and manages the shared default network.
+- Services communicate using Docker DNS names (`service-name`) on that network.
+
+### Documentation Service
+
+The stack includes a **Material for MkDocs** service to maintain full project documentation.
+
+- Service file: `services/mkdocs/docker-compose-mkdocs.yaml`
+- Config file: `mkdocs.yml`
+- Docs content: `docs/`
+- Access URLs:
+  - `http://localhost:8001`
+  - `http://mkdocs.localhost` (when Traefik is enabled)
+
+### Swagger UI + MkDocs Integration
+
+Interactive API documentation is embedded directly into the MkDocs portal.
+
+- Plugin: `mkdocs-swagger-ui-tag`
+- API page: `docs/api-reference.md`
+- OpenAPI source: `docs/specs/openapi.yaml`
+
+This keeps architecture guides, runbooks, and live API testing in one place.
+
+### Documentation-First Convention
+
+- Keep implementation files free of explanatory inline comments.
+- Put architecture, service behavior, and operational context in `docs/`.
+- Put API contract details in `docs/specs/openapi.yaml`.
 
 ## 📋 Development Workflow
 

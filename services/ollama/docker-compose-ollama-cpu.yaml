@@ -1,85 +1,26 @@
-# =============================================================================
-# Ollama CPU Service
-# =============================================================================
-# This service runs the Ollama LLM inference engine in CPU‑only mode.
-# It provides a local API endpoint (port 11434) that other services (e.g., Open WebUI)
-# can use to generate text completions, embeddings, and chat responses.
-#
-# The service consists of two containers:
-#   1. ollama-cpu: the main inference server
-#   2. ollama-cpu-pull: a helper that downloads predefined models on first startup
-#
-# Both containers share the same persistent volume for models and configuration,
-# ensuring that downloaded models survive container restarts.
-#
-# Profile: "cpu" – activated via `docker compose --profile cpu up -d`
-# =============================================================================
-
-# -----------------------------------------------------------------------------
-# Anchor definition for the main Ollama CPU container
-# -----------------------------------------------------------------------------
 x-ollama-cpu: &ollama-cpu
-  # Official Ollama image (supports ARM/AMD, CPU‑only inference)
   image: ollama/ollama:latest
   container_name: ollama-cpu
   restart: unless-stopped
-
-  # Expose the Ollama API on the standard port 11434
   ports:
     - 11434:11434
-
-  # Allows the container to reach host services via host.docker.internal
   extra_hosts:
     - "host.docker.internal:host-gateway"
-
-  # -------------------------------------------------------------------------
-  # Persistent volumes
-  # -------------------------------------------------------------------------
-  # All data is stored under ${LOCALAI_DATA} (default: ../.LocalAI).
-  # This makes the stack portable across different users and systems.
   volumes:
-    # Configuration and runtime data (e.g., downloaded model metadata)
     - ${LOCALAI_DATA:-../.LocalAI}/services/ollama-cpu:/root/.ollama
-    # Model weights – shared with the GPU variant to avoid duplication
     - ${LOCALAI_DATA:-../.LocalAI}/models/ollama:/root/.ollama/models
-
-  # -------------------------------------------------------------------------
-  # Environment variables
-  # -------------------------------------------------------------------------
   environment:
-    # ==========================================
-    # ACTIVE VARIABLES (Required for operation)
-    # ==========================================
-    - GIN_MODE=release                      # Suppresses verbose web‑framework logs
-    - OLLAMA_HOST=0.0.0.0                   # CRITICAL: Makes Ollama listen on all interfaces, allowing connections from other containers
-    - OLLAMA_ORIGINS=*                      # CRITICAL: Disables CORS restrictions, required for Open WebUI to connect
+    - GIN_MODE=release
+    - OLLAMA_HOST=0.0.0.0
+    - OLLAMA_ORIGINS=*
 
-    # ==========================================
-    # INACTIVE VARIABLES (General documentation)
-    # Remove the leading '#' to enable a feature.
-    # ==========================================
-    # - OLLAMA_KEEP_ALIVE=5m                # How long a model stays loaded in RAM after use (e.g., "5m", "1h", or "-1" for forever). Useful on CPU to avoid reloading.
-    # - OLLAMA_MODELS=/root/.ollama/models  # Custom path where downloaded models are stored.
-    # - OLLAMA_NUM_PARALLEL=1               # Number of concurrent requests the model will process. (1 is ideal for CPU).
-    # - OLLAMA_MAX_QUEUE=512                # Maximum number of requests queued before rejecting new ones.
-    # - OLLAMA_DEBUG=false                  # Change to "true" if you need super‑detailed error logs.
-    # - OLLAMA_MAX_VRAM=0                   # Limit of GPU memory to use. (Not applicable for CPU, but 0 means automatic).
-    # - OLLAMA_NOHISTORY=false              # If "true", the server does not keep your prompt history.
-    # - OLLAMA_NOPRUNE=false                # If "true", prevents Ollama from cleaning up old temporary files on startup.
-    # - OLLAMA_TMPDIR=/tmp                  # Directory where Ollama creates temporary files while generating responses.
-
-# -----------------------------------------------------------------------------
-# Anchor definition for the model‑pulling helper container
-# -----------------------------------------------------------------------------
 x-ollama-cpu-pull: &ollama-cpu-pull
   image: ollama/ollama:latest
   container_name: ollama-cpu-pull
   volumes:
-    # Same volumes as the main container – ensures pulled models land in the shared location
     - ${LOCALAI_DATA:-../.LocalAI}/services/ollama-cpu:/root/.ollama
     - ${LOCALAI_DATA:-../.LocalAI}/models/ollama:/root/.ollama/models
   environment:
-    # Tell the pull command to connect to the main CPU container
     - OLLAMA_HOST=ollama-cpu:11434
   entrypoint: /bin/sh
   command:
@@ -92,36 +33,13 @@ x-ollama-cpu-pull: &ollama-cpu-pull
       echo 'pulling qwen3.5:0.8b'; ollama pull qwen3.5:0.8b;
       echo 'pulling qwen3.5:2b'; ollama pull qwen3.5:3b;
       echo 'pulling qwen3.5:4b'; ollama pull qwen3.5:4b"
-
-# -----------------------------------------------------------------------------
-# Service definitions
-# -----------------------------------------------------------------------------
 services:
   ollama-cpu:
-    profiles: ["cpu"]                # Activated with the "cpu" profile
-    <<: *ollama-cpu                  # Inherits the anchor definition above
+    profiles: ["cpu"]
+    <<: *ollama-cpu
 
   ollama-cpu-pull:
     profiles: ["cpu"]
     <<: *ollama-cpu-pull
     depends_on:
-      - ollama-cpu                   # Waits for the main server to be ready before pulling models
-
-# =============================================================================
-# Usage Notes
-# =============================================================================
-# 1. The pull container runs once, downloads the listed models, then exits.
-#    Its logs will show the progress of each model download.
-#
-# 2. To add or remove models, edit the command list inside the
-#    x-ollama-cpu-pull anchor. Model names must be valid Ollama model tags.
-#
-# 3. The same model directory is shared with the GPU variant (if present).
-#    If you run both CPU and GPU profiles, models need to be downloaded only once.
-#
-# 4. To interact with the Ollama API directly:
-#      curl http://localhost:11434/api/generate -d '{"model":"llama3.2:1b","prompt":"Hello"}'
-#
-# 5. If you change LOCALAI_DATA in your .env file, ensure the target directory
-#    exists and has appropriate permissions.
-# =============================================================================
+      - ollama-cpu

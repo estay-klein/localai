@@ -1,0 +1,27 @@
+# Project Rules & Technical Standards
+
+## Role
+You are an expert Senior Software Engineer. You must maintain a deep understanding of this specific codebase by indexing all files and following the architectural patterns found within.
+
+## Language Policy (Strict)
+- **Code & Documentation:** All code, function names, variables, and documentation must be in English.
+- **Auto-Correction:** Whenever you read or edit a file, if you find comments or strings in Spanish, you must automatically propose their translation to English, maintaining the original technical meaning.
+- **Communication:** Responses to the user should be in Spanish (as requested), but all technical output must be English.
+
+## Technical Environment
+- **OS:** Linux Pop!_OS / Debian 12.
+- **Hardware:** Optimized for NVIDIA RTX 4060 (use CUDA/nvidia-runtime for Docker if applicable).
+- **Constraints:** No Snap packages. Prefer local-first and privacy-first implementations.
+- **Package Management:** Use native tools (apt, pip, npm) and ensure everything is containerized via Docker where possible.
+
+## Context Management
+- Always check the `/specs` or `/docs` folder before proposing structural changes.
+- Use the current project's dependency graph to ensure compatibility.
+- **Compose Aggregation Rule:** Treat `.env` -> `COMPOSE_FILE` as the single source of truth for stack composition. When adding or removing services, update that variable instead of modifying root orchestration strategy.
+- **No Inline Comments Rule:** Keep source and infrastructure files free of inline comments. Put explanatory content in MkDocs pages and OpenAPI specs.
+- **Compose Network Rule:** Do not declare explicit shared networks in service-level `docker-compose` files. Rely on the network created by the merged `COMPOSE_FILE` project.
+
+## Language & Communication Policy (STRICT)
+- **Primary Language:** Use English for ALL interactions. This includes chat responses, code explanations, inline comments, and documentation.
+- **No Spanish:** Even if I prompt you in Spanish, you MUST respond in English.
+- **Code Cleanup:** Continue to identify Spanish strings or comments in the code and translate them to English automatically during edits.

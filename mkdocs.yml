@@ -1,0 +1,28 @@
+site_name: LocalAI Stack Docs
+site_description: Documentation for the Local & Open-Source AI Stack
+site_url: http://mkdocs.localhost
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Standards: standards.md
+  - Architecture: architecture.md
+  - Services: services.md
+  - API Reference: api-reference.md
+  - Operations: operations.md
+
+plugins:
+  - search
+  - swagger-ui-tag:
+      background: white
+
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true

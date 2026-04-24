@@ -1,110 +1,22 @@
-# =============================================================================
-# Traefik Reverse Proxy Service
-# =============================================================================
-# Traefik acts as the single entry point for all external HTTP/HTTPS traffic.
-# It automatically discovers other services via Docker labels and routes requests
-# accordingly. This service is mandatory for the stack to be accessible from a
-# browser.
-#
-# Features:
-#   - Automatic SSL/TLS termination (redirects HTTP → HTTPS)
-#   - Built‑in Let's Encrypt support (commented out by default)
-#   - Web dashboard on port 8080 (insecure – for local use only)
-#   - Docker provider enabled for automatic service discovery
-# =============================================================================
-
 services:
   traefik:
-    # Official Traefik v3.6 image – stable, feature‑complete
     image: "traefik:v3.6"
     container_name: traefik
     restart: always
-
-    # -------------------------------------------------------------------------
-    # Command‑line arguments
-    # -------------------------------------------------------------------------
     command:
-      # Uncomment for verbose logging during debugging
-      #- "--log.level=DEBUG"
-
-      # Enable the built‑in web dashboard (available at http://localhost:8080)
       - "--api=true"
       - "--api.insecure=true"
-
-      # Enable Docker provider for automatic service discovery
       - "--providers.docker=true"
-      # Uncomment to require explicit Traefik labels on services
-      #- "--providers.docker.exposedbydefault=false"
-
-      # Define HTTP (80) and HTTPS (443) entry points
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
-
-      # Redirect all HTTP traffic to HTTPS automatically
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
       - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-
-      # Let's Encrypt configuration (disabled by default)
-      # Uncomment and set ${MAIL} in your .env to enable automatic SSL certificates
-      #- "--certificatesresolvers.mytlschallenge.acme.tlschallenge=true"
-      #- "--certificatesresolvers.mytlschallenge.acme.email=${MAIL}"
-      #- "--certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json"
-
-    # -------------------------------------------------------------------------
-    # Port mappings
-    # -------------------------------------------------------------------------
     ports:
-      # Host port 80 → container port 80 (HTTP)
       - "80:80"
-      # Host port 443 → container port 443 (HTTPS)
       - "443:443"
-      # Host port 8080 → container port 8080 (Traefik dashboard)
       - "8080:8080"
-
-    # -------------------------------------------------------------------------
-    # Environment variables
-    # -------------------------------------------------------------------------
     environment:
-      # Jaeger tracing integration (optional)
       JAEGER_AGENT_HOST: "jaeger"
       JAEGER_AGENT_PORT: "6831"
-
-    # -------------------------------------------------------------------------
-    # Volumes
-    # -------------------------------------------------------------------------
     volumes:
-      # Let's Encrypt certificate storage (disabled)
-      #- ~/.LocalAI/letsencrypt:/letsencrypt
-
-      # Docker socket – required for Traefik to listen to Docker events
-      #- /var/run/docker.sock:/var/run/docker.sock:ro
       - /var/run/docker.sock:/var/run/docker.sock
-
-      # Custom static configuration file (optional)
-      #- ./assets/traefik/config:/traefik.toml
-
-# =============================================================================
-# Notes
-# =============================================================================
-# 1. The Traefik dashboard is available at http://localhost:8080 (insecure).
-#    For production, add authentication middleware or restrict access.
-#
-# 2. To enable automatic SSL certificates with Let's Encrypt:
-#    a) Uncomment the certificate resolver lines in the command section.
-#    b) Set the MAIL environment variable in your .env file.
-#    c) Uncomment the letsencrypt volume mount.
-#
-# 3. The service does not require a profile – it's always running when the
-#    stack is started.
-#
-# 4. All other services should define Traefik labels for automatic routing.
-#    Example labels for a service:
-#      labels:
-#        traefik.enable: true
-#        traefik.http.routers.myservice.rule: Host(`myservice.localhost`)
-#        traefik.http.routers.myservice.entrypoints: web,websecure
-#        traefik.http.services.myservice.loadbalancer.server.port: 8080
-#
-# 5. The service attaches to the default network defined in the root
-#    docker‑compose.yml file (LocalAI).
-# =============================================================================

@@ -1,4 +1,3 @@
-# Open WebUI CPU Service
 x-openwebui-cpu: &openwebui-cpu
   image: ghcr.io/open-webui/open-webui:latest
   container_name: openwebui-cpu
@@ -22,15 +21,13 @@ x-openwebui-cpu: &openwebui-cpu
     traefik.http.middlewares.ia-streaming-cpu.buffering.maxResponseBodyBytes: 0
     traefik.http.middlewares.ia-streaming-cpu.buffering.maxRequestBodyBytes: 0
     traefik.http.middlewares.ia-streaming-gpu.buffering.memResponseBodyBytes: 0
-
-
 services:
   openwebui-cpu:
     profiles: ["cpu"]
     <<: *openwebui-cpu
     environment:
       - OLLAMA_BASE_URL=http://ollama-cpu:11434
-      - WEBUI_SECRET_KEY=UnaClaveSuperSecretaYFuerte
+      - WEBUI_SECRET_KEY=AReallyStrongSecretKey
       - USE_CUDA_DOCKER=false
       - DEFAULT_MODELS=qwen2.5:0.5b
       - DEFAULT_LOCALE=en-US

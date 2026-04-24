@@ -1,0 +1,23 @@
+openapi: 3.0.3
+info:
+  title: LocalAI Stack API
+  version: 0.1.0
+  description: Initial OpenAPI skeleton for MkDocs embedded Swagger UI.
+servers:
+  - url: http://localhost
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Basic health endpoint example.
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok

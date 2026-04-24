@@ -9,6 +9,97 @@
 
 ## Current Tasks
 
+### [DONE] TASK-008: Enforce documentation-first policy and compose network simplification
+**Created:** 2026-04-23
+**Assignee:** Codex (AI Agent)
+**Priority:** High
+**Description:**
+Remove inline explanatory comments from source/infrastructure files, move guidance into MkDocs/OpenAPI docs, and remove explicit shared `LocalAI` network declarations from compose files to rely on merged Compose project networking.
+
+**Subtasks:**
+- [x] Remove inline comments from compose, Dockerfile, Python, and env files touched by the stack baseline
+- [x] Remove explicit `LocalAI` network declarations from service compose files
+- [x] Simplify root `docker-compose.yml` for merged composition usage
+- [x] Add documentation-first and network policy rules to foundational files
+- [x] Add MkDocs standards page documenting the new conventions
+- [x] Verify merged Compose configuration
+
+**Dependencies:** None
+**Estimated Effort:** 45 minutes
+**Related Spec:** `.spec/spec.md` (Sections 4, 11)
+**Constitutional Compliance:** Yes
+
+---
+
+### [DONE] TASK-007: Integrate Swagger UI directly into MkDocs
+**Created:** 2026-04-23
+**Assignee:** Codex (AI Agent)
+**Priority:** High
+**Description:**
+Integrate interactive Swagger UI into the MkDocs documentation portal using a dedicated MkDocs plugin, so API docs and narrative docs are available in one place.
+
+**Subtasks:**
+- [x] Create custom MkDocs Dockerfile with `mkdocs-swagger-ui-tag`
+- [x] Update MkDocs compose service to build custom image
+- [x] Add plugin configuration in `mkdocs.yml`
+- [x] Add `docs/api-reference.md` with embedded Swagger UI
+- [x] Add initial OpenAPI file at `docs/specs/openapi.yaml`
+- [x] Update `.spec/spec.md` and `Readme.md` to reflect integration
+- [x] Verify merged Compose configuration
+
+**Dependencies:** None
+**Estimated Effort:** 30 minutes
+**Related Spec:** `.spec/spec.md` (Sections 3, 10)
+**Constitutional Compliance:** Yes
+
+---
+
+### [DONE] TASK-006: Add Material for MkDocs documentation service
+**Created:** 2026-04-23
+**Assignee:** Codex (AI Agent)
+**Priority:** High
+**Description:**
+Add a dedicated Material for MkDocs service to host full stack documentation, integrate it through `.env` `COMPOSE_FILE`, and create an initial docs skeleton for immediate use.
+
+**Subtasks:**
+- [x] Create `services/mkdocs/docker-compose-mkdocs.yaml`
+- [x] Create `mkdocs.yml` with Material theme configuration
+- [x] Create initial docs pages under `/docs/`
+- [x] Update `.env` `COMPOSE_FILE` to include the new service
+- [x] Update `.spec/spec.md` service matrix and technology stack
+- [x] Update `Readme.md` with documentation service details
+- [x] Verify merged Compose configuration
+
+**Dependencies:** None
+**Estimated Effort:** 30 minutes
+**Related Spec:** `.spec/spec.md` (Sections 3, 6, 9)
+**Constitutional Compliance:** Yes
+
+---
+
+### [DONE] TASK-005: Add Postgres, TimescaleDB, and pgvector services
+**Created:** 2026-04-23
+**Assignee:** Codex (AI Agent)
+**Priority:** High
+**Description:**
+Add three database services (`postgres`, `timescaledb`, `pgvector`) to the LocalAI stack, with persistent host-path storage and single-line activation via `.env` `COMPOSE_FILE`.
+
+**Subtasks:**
+- [x] Create `services/postgres/docker-compose-postgres.yaml`
+- [x] Create `services/timescaledb/docker-compose-timescaledb.yaml`
+- [x] Create `services/pgvector/docker-compose-pgvector.yaml`
+- [x] Update `.env` `COMPOSE_FILE` to include all three services
+- [x] Update `.spec/spec.md` service matrix and data layout
+- [x] Update `Readme.md` to document service selection via `COMPOSE_FILE`
+- [x] Verify configuration consistency
+
+**Dependencies:** None
+**Estimated Effort:** 45 minutes
+**Related Spec:** `.spec/spec.md` (Sections 3, 5, 6)
+**Constitutional Compliance:** Yes
+
+---
+
 ### [DONE] TASK-004: Eliminate redis and supervisord profiles, clarify only 2 profiles exist
 **Created:** 2026-04-20
 **Assignee:** Roo (AI Agent)

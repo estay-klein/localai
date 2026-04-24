@@ -1,76 +1,26 @@
-# =============================================================================
-# Ollama GPU Service
-# =============================================================================
-# This service runs the Ollama LLM inference engine with NVIDIA GPU acceleration.
-# It is functionally identical to the CPU variant but uses a different port (11435)
-# and includes explicit GPU device passthrough via Docker's `deploy.resources`.
-#
-# The service consists of two containers:
-#   1. ollama-gpu: the main inference server with GPU access
-#   2. ollama-gpu-pull: a helper that downloads a larger set of GPU‑optimized models
-#
-# Both containers share the same persistent volume for models and configuration.
-# Model weights are stored in the same directory as the CPU variant, allowing
-# models to be reused across profiles.
-#
-# Prerequisites:
-#   - NVIDIA GPU with appropriate drivers installed on the host
-#   - NVIDIA Container Toolkit (nvidia‑container‑toolkit) configured
-#
-# Profile: "gpu-nvidia" – activated via `docker compose --profile gpu-nvidia up -d`
-# =============================================================================
-
-# -----------------------------------------------------------------------------
-# Anchor definition for the main Ollama GPU container
-# -----------------------------------------------------------------------------
 x-ollama-gpu: &ollama-gpu
-  # Official Ollama image (includes CUDA support when run with GPU passthrough)
   image: ollama/ollama:latest
   container_name: ollama-gpu
   restart: unless-stopped
-
-  # Expose the Ollama API on port 11435 (different from CPU's 11434 to avoid conflict)
   ports:
     - "11435:11434"
-
-  # Allows the container to reach host services via host.docker.internal
   extra_hosts:
     - "host.docker.internal:host-gateway"
-
-  # -------------------------------------------------------------------------
-  # Persistent volumes
-  # -------------------------------------------------------------------------
-  # All data is stored under ${LOCALAI_DATA} (default: ../.LocalAI).
-  # The models directory is shared with the CPU variant.
   volumes:
-    # Configuration and runtime data (separate from CPU to keep settings isolated)
     - ${LOCALAI_DATA:-../.LocalAI}/services/ollama-gpu:/root/.ollama
-    # Model weights – shared with the CPU variant to avoid duplication
     - ${LOCALAI_DATA:-../.LocalAI}/models/ollama:/root/.ollama/models
-
-  # -------------------------------------------------------------------------
-  # Environment variables
-  # -------------------------------------------------------------------------
   environment:
-    # Suppresses verbose web‑framework logs (same as CPU variant)
     - GIN_MODE=release
-    # Force Ollama to listen on all interfaces (required for external container access)
     - OLLAMA_HOST=0.0.0.0
-    # Allow CORS from any origin (required for Open WebUI connectivity)
     - OLLAMA_ORIGINS=*
 
-# -----------------------------------------------------------------------------
-# Anchor definition for the model‑pulling helper container (GPU)
-# -----------------------------------------------------------------------------
 x-ollama-gpu-pull: &ollama-gpu-pull
   image: ollama/ollama:latest
   container_name: ollama-gpu-pull
   volumes:
-    # Same volumes as the main GPU container
     - ${LOCALAI_DATA:-../.LocalAI}/services/ollama-gpu:/root/.ollama
     - ${LOCALAI_DATA:-../.LocalAI}/models/ollama:/root/.ollama/models
   environment:
-    # Tell the pull command to connect to the main GPU container
     - OLLAMA_HOST=ollama-gpu:11434
   entrypoint: /bin/sh
   command:
@@ -95,53 +45,22 @@ x-ollama-gpu-pull: &ollama-gpu-pull
       echo 'pulling deepseek-r1:1.5b'; ollama pull deepseek-r1:1.5b;
       echo 'pulling deepseek-r1:7b'; ollama pull deepseek-r1:7b;
       echo 'pulling deepseek-r1:8b'; ollama pull deepseek-r1:8b;
+      echo 'pulling deepseek-coder-v2:16b'; ollama pull deepseek-coder-v2:16b;
       "
-
-# -----------------------------------------------------------------------------
-# Service definitions
-# -----------------------------------------------------------------------------
 services:
   ollama-gpu:
-    profiles: ["gpu-nvidia"]          # Activated with the "gpu-nvidia" profile
-    <<: *ollama-gpu                   # Inherits the anchor definition above
+    profiles: ["gpu-nvidia"]
+    <<: *ollama-gpu
     deploy:
       resources:
         reservations:
           devices:
-            # Explicit GPU passthrough – grants the container access to all NVIDIA GPUs
             - driver: nvidia
-              count: all               # Use all available GPUs; change to 1 for a single GPU
-              capabilities: [gpu]      # Request general GPU capability
+              count: all
+              capabilities: [gpu]
 
   ollama-gpu-pull:
     profiles: ["gpu-nvidia"]
     <<: *ollama-gpu-pull
     depends_on:
-      - ollama-gpu                    # Waits for the main GPU server to be ready
-
-# =============================================================================
-# Usage Notes
-# =============================================================================
-# 1. The pull container runs once, downloads the listed models, then exits.
-#    The model list is larger than the CPU variant because GPU can handle bigger models.
-#
-# 2. To add or remove models, edit the command list inside the
-#    x-ollama-gpu-pull anchor. Model names must be valid Ollama model tags.
-#
-# 3. The same model directory is shared with the CPU variant. If you have already
-#    downloaded models with the CPU profile, they will be reused here.
-#
-# 4. To interact with the Ollama GPU API directly:
-#      curl http://localhost:11435/api/generate -d '{"model":"llama3.2:1b","prompt":"Hello"}'
-#
-# 5. If you have multiple GPUs and want to restrict Ollama to a specific one,
-#    change `count: all` to `count: 1` and add `device_ids: ['0']` (or the
-#    appropriate GPU index).
-#
-# 6. Ensure the host has the NVIDIA Container Toolkit installed and Docker is
-#    configured to use it (`docker run --gpus all nvidia/cuda:12.0.0-base nvidia-smi`
-#    should work).
-#
-# 7. If you change LOCALAI_DATA in your .env file, ensure the target directory
-#    exists and has appropriate permissions.
-# =============================================================================
+      - ollama-gpu
