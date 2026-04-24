@@ -57,6 +57,7 @@ services:
     ports:
       - "8188:8188"
     environment:
+      - WEB_ENABLE_AUTH=false
       - NVIDIA_VISIBLE_DEVICES=all
       - COMFYUI_FLAGS=--xformers --fp8_base # Optimización para RTX 4060
     volumes:
@@ -79,6 +80,7 @@ services:
     ports:
       - "7860:7860"
     environment:
+      - WEB_ENABLE_AUTH=false
       - NVIDIA_VISIBLE_DEVICES=all
       - CLI_ARGS=--xformers --medvram-sdxl --api --listen # medvram es clave para 8GB
     volumes:
