@@ -6,8 +6,8 @@ x-supervisord: &supervisord
   container_name: supervisord
   restart: unless-stopped
   volumes:
-    - ${LOCALAI_DATA:-../.LocalAI}/scripts:/app/scripts:ro
-    - ${LOCALAI_DATA:-../.LocalAI}/data:/app/data:rw
+    - ../../docker/scripts:/app/scripts:ro
+    - ../../docker/data:/app/data:rw
     - ../../src:/app/src:ro
     - ../../services/supervisord/supervisord.conf:/etc/supervisor/supervisord.conf:ro
     - ./conf.d:/etc/supervisor/conf.d:ro
