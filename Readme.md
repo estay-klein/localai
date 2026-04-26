@@ -9,7 +9,7 @@ The stack is built around **Docker Compose** micro‑services, each running in i
 Key architectural principles:
 
 - **Container‑First:** All services run inside Docker containers.
-- **Host‑Path Persistence:** Persistent data lives under `.LocalAI/` directory relative to the project root (configurable via `LOCALAI_DATA` environment variable).
+- **Persistent Data:** All runtime data lives inside the `.docker/data/services/` directory, which is git‑ignored. No environment variable is needed — the stack always uses this fixed path.
 - **Supervisord Supervision:** All application scripts are managed by `supervisord` inside a dedicated container.
 - **Spec‑Driven Development:** Every change follows the SDD cycle (read spec → update tasks → implement → commit).
 
@@ -25,11 +25,14 @@ Key architectural principles:
 │   ├── supervisord/          # Process supervision container
 │   ├── redis/                # In‑memory cache (example)
 │   └── [service]/            # Other services (see below)
-├── docker/                   # Base Dockerfiles & environment templates
 ├── scripts/                  # Maintenance & automation bash scripts
 ├── src/                      # Core application logic (modular Python)
 │   └── pipes/                # Pipe implementations (e.g., n8n_pipe)
 ├── assets/                   # Static assets (logos, etc.)
+├── docs/                     # MkDocs documentation source
+├── mkdocs.yml                # Material for MkDocs configuration
+├── .docker/                  # Runtime persistent data (git‑ignored)
+├── .repo/                    # External repository cache (git‑ignored)
 └── docker‑compose.yml        # Root composition that includes all services
 ```
 
@@ -51,7 +54,7 @@ Key architectural principles:
 
 2. **Create the host data directories** (optional – they will be created automatically on first run):
    ```bash
-   mkdir -p ~/.LocalAI/{models,services,data,secrets}
+   mkdir -p .docker/data/services
    ```
 
 3. **Start the services** (this will pull images and start containers):
@@ -64,6 +67,8 @@ Key architectural principles:
    - OpenWebUI (CPU): `http://open‑cpu.localhost`
    - OpenWebUI (GPU): `http://open‑gpu.localhost`
    - Supervisord web UI: `http://supervisord.localhost` (user `admin`, password `localai`)
+   - Supervisord Monitor: `http://supervisord-monitor.localhost`
+   - LocalAI Dashboard: `http://dashboard.localhost`
    - Ollama API: `http://localhost:11434` (CPU) or `:11435` (GPU)
 
 ## 🔧 Core Services
@@ -71,17 +76,18 @@ Key architectural principles:
 | Service | Role | Image | Port | Host Data Path |
 |---------|------|-------|------|----------------|
 | traefik | Reverse Proxy | `traefik:latest` | 80, 443 | – |
-| ollama‑cpu | LLM Inference (CPU) | `ollama/ollama` | 11434 | `~/.LocalAI/models/ollama` |
-| ollama‑gpu | LLM Inference (GPU) | `ollama/ollama` | 11435 | `~/.LocalAI/models/ollama` |
-| openwebui‑cpu | Web UI (CPU) | `ghcr.io/open‑webui/open‑webui:main` | 3030 | `~/.LocalAI/services/openwebui` |
-| openwebui‑gpu | Web UI (GPU) | `ghcr.io/open‑webui/open‑webui:main` | 3031 | `~/.LocalAI/services/openwebui` |
-| supervisord | Process Supervisor | Custom (see `docker/Dockerfile.supervisord`) | 9001 | `~/.LocalAI/scripts` |
-| postgres | Relational Database | `postgres:16` | 5432 | `~/.LocalAI/data/postgres` |
-| timescaledb | Time-Series Database | `timescale/timescaledb:latest-pg16` | 5433 | `~/.LocalAI/data/timescaledb` |
-| pgvector | Vector-Enabled PostgreSQL | `pgvector/pgvector:pg16` | 5434 | `~/.LocalAI/data/pgvector` |
+| ollama‑cpu | LLM Inference (CPU) | `ollama/ollama` | 11434 | ./.docker/data/services/ollama |
+| ollama‑gpu | LLM Inference (GPU) | `ollama/ollama` | 11435 | ./.docker/data/services/ollama |
+| openwebui‑cpu | Web UI (CPU) | `ghcr.io/open‑webui/open‑webui:main` | 3030 | ./.docker/data/services/openwebui‑cpu |
+| openwebui‑gpu | Web UI (GPU) | `ghcr.io/open‑webui/open‑webui:main` | 3031 | ./.docker/data/services/openwebui‑gpu |
+| supervisord | Process Supervisor | Custom (services/supervisord/Dockerfile.supervisord) | 9001 | ./.docker/data/services/supervisord |
+| supervisord‑monitor | Supervisor Web UI Monitoring | `dockage/supervisor‑web:2.2.0` | 80 | – |
+| localai | LocalAI Dashboard & Workspace Canvas | Custom (localai) | 8081 | ./.docker/data/services/localai |
+| postgres | Relational Database | `postgres:16` | 5432 | ./.docker/data/services/postgres |
+| timescaledb | Time‑Series Database | `timescale/timescaledb:latest-pg16` | 5433 | ./.docker/data/services/timescaledb |
+| pgvector | Vector‑Enabled PostgreSQL | `pgvector/pgvector:pg16` | 5434 | ./.docker/data/services/pgvector |
 | mkdocs | Documentation Site (Material for MkDocs) | `squidfunk/mkdocs-material:latest` | 8001 | `./docs`, `./mkdocs.yml` |
-| redis | In‑Memory Cache | `redis:7‑alpine` | 6379 | `~/.LocalAI/data/redis` |
-| *[many more]* | … | … | … | … |
+| redis | In‑Memory Cache | `redis:7‑alpine` | 6379 | ./.docker/data/services/redis |
 
 > **Note:** Service activation is controlled by `.env` → `COMPOSE_FILE`. Add or remove service compose files in that single line (colon-separated) to customize the stack for your environment.
 
@@ -141,10 +147,10 @@ All scripts that implement business logic must be placed under `/scripts/` (for 
 
 ## 🔐 Security & Data Persistence
 
-- **Secrets** are stored in `~/.LocalAI/secrets/` (outside the repository).
+- **Secrets** are stored in `.docker/secrets/` (git‑ignored).
 - **Environment variables** are defined in `.env` (git‑ignored) with an `.env.example` template.
-- **Model weights** and other large files reside in `~/.LocalAI/models/`.
-- **Service‑specific data** (databases, configuration) is kept in `~/.LocalAI/services/` and `~/.LocalAI/data/`.
+- **Model weights** and other large files reside in `.docker/data/services/ollama` (and other service directories under `.docker/data/services/`).
+- **Service‑specific data** (databases, configuration) is kept in `.docker/data/services/<service‑name>/`.
 
 ## 📄 License
 

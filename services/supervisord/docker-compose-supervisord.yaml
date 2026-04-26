@@ -6,9 +6,8 @@ x-supervisord: &supervisord
   container_name: supervisord
   restart: unless-stopped
   volumes:
-    - ../../docker/scripts:/app/scripts:ro
-    - ../../docker/data:/app/data:rw
     - ../../src:/app/src:ro
+    - ../../.docker/data/services/supervisord:/app/data:rw
     - ../../services/supervisord/supervisord.conf:/etc/supervisor/supervisord.conf:ro
     - ./conf.d:/etc/supervisor/conf.d:ro
   environment:
@@ -25,3 +24,18 @@ x-supervisord: &supervisord
 services:
   supervisord:
     <<: *supervisord
+  supervisord-monitor:
+    image: dockage/supervisor-web:2.2.0
+    container_name: supervisord-monitor
+    restart: unless-stopped
+    depends_on:
+      - supervisord
+    environment:
+      - SUPERVISOR_HOST=supervisord
+      - SUPERVISOR_PORT=9001
+    labels:
+      traefik.enable: true
+      traefik.http.routers.supervisord-monitor.rule: Host(`supervisord-monitor.localhost`)
+      traefik.http.routers.supervisord-monitor.entrypoints: web, websecure
+      traefik.http.services.supervisord-monitor.loadbalancer.server.port: 80
+      traefik.http.services.supervisord-monitor.loadbalancer.passhostheader: true
