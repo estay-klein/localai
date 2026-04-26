@@ -1,0 +1,16 @@
+x-searxng: &searxng
+  image: searxng/searxng:latest
+  container_name: searxng
+  restart: unless-stopped
+  ports:
+    - "8080:8080"
+  volumes:
+    - ../../.localai/data/services/searxng:/etc/searxng
+  labels:
+    traefik.enable: true
+    traefik.http.routers.searxng.rule: Host(`searxng.localhost`)
+    traefik.http.routers.searxng.entrypoints: web, websecure
+    traefik.http.services.searxng.loadbalancer.server.port: 8080
+services:
+  searxng:
+    <<: *searxng

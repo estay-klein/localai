@@ -1,0 +1,18 @@
+x-swagger-ui: &swagger-ui
+  image: swaggerapi/swagger-ui
+  container_name: swagger-ui
+  restart: unless-stopped
+  ports:
+    - "8082:8080"
+  volumes:
+    - ../../docs:/specs:ro
+  environment:
+    - SWAGGER_JSON=/specs/openapi.yaml
+  labels:
+    traefik.enable: true
+    traefik.http.routers.swagger-ui.rule: Host(`swagger.localhost`)
+    traefik.http.routers.swagger-ui.entrypoints: web, websecure
+    traefik.http.services.swagger-ui.loadbalancer.server.port: 8080
+services:
+  swagger-ui:
+    <<: *swagger-ui

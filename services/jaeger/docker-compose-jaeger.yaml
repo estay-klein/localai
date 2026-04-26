@@ -1,0 +1,14 @@
+x-jaeger: &jaeger
+  image: jaegertracing/all-in-one:latest
+  container_name: jaeger
+  restart: unless-stopped
+  ports:
+    - "16686:16686"
+  labels:
+    traefik.enable: true
+    traefik.http.routers.jaeger.rule: Host(`jaeger.localhost`)
+    traefik.http.routers.jaeger.entrypoints: web, websecure
+    traefik.http.services.jaeger.loadbalancer.server.port: 16686
+services:
+  jaeger:
+    <<: *jaeger

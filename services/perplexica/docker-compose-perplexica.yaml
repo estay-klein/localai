@@ -1,0 +1,16 @@
+x-perplexica: &perplexica
+  image: perplexica/perplexica:latest
+  container_name: perplexica
+  restart: unless-stopped
+  ports:
+    - "3004:3004"
+  volumes:
+    - ../../.localai/data/services/perplexica:/app/data
+  labels:
+    traefik.enable: true
+    traefik.http.routers.perplexica.rule: Host(`perplexica.localhost`)
+    traefik.http.routers.perplexica.entrypoints: web, websecure
+    traefik.http.services.perplexica.loadbalancer.server.port: 3004
+services:
+  perplexica:
+    <<: *perplexica

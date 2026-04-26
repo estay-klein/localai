@@ -1,0 +1,20 @@
+x-localai: &localai
+  build:
+    context: ../..
+    dockerfile: localai/Dockerfile
+  container_name: localai
+  restart: unless-stopped
+  ports:
+    - "8081:8081"
+  volumes:
+    - ../../localai:/app:rw
+    - ../../.localai/data/services/localai:/app/data:rw
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+  labels:
+    traefik.enable: true
+    traefik.http.routers.localai.rule: Host(`dashboard.localhost`)
+    traefik.http.routers.localai.entrypoints: web, websecure
+    traefik.http.services.localai.loadbalancer.server.port: 8081
+services:
+  localai:
+    <<: *localai

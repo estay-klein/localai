@@ -1,0 +1,14 @@
+x-browseruse: &browseruse
+  image: browseruse/browseruse:latest
+  container_name: browseruse
+  restart: unless-stopped
+  ports:
+    - "3003:3003"
+  labels:
+    traefik.enable: true
+    traefik.http.routers.browseruse.rule: Host(`browseruse.localhost`)
+    traefik.http.routers.browseruse.entrypoints: web, websecure
+    traefik.http.services.browseruse.loadbalancer.server.port: 3003
+services:
+  browseruse:
+    <<: *browseruse

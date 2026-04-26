@@ -1,0 +1,16 @@
+x-langflow: &langflow
+  image: langflowai/langflow:latest
+  container_name: langflow
+  restart: unless-stopped
+  ports:
+    - "7860:7860"
+  volumes:
+    - ../../.localai/data/services/langflow:/app/langflow
+  labels:
+    traefik.enable: true
+    traefik.http.routers.langflow.rule: Host(`langflow.localhost`)
+    traefik.http.routers.langflow.entrypoints: web, websecure
+    traefik.http.services.langflow.loadbalancer.server.port: 7860
+services:
+  langflow:
+    <<: *langflow

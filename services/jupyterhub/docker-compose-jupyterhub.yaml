@@ -1,0 +1,16 @@
+x-jupyterhub: &jupyterhub
+  image: jupyterhub/jupyterhub:latest
+  container_name: jupyterhub
+  restart: unless-stopped
+  ports:
+    - "8000:8000"
+  volumes:
+    - ../../.localai/data/services/jupyterhub:/srv/jupyterhub
+  labels:
+    traefik.enable: true
+    traefik.http.routers.jupyterhub.rule: Host(`jupyterhub.localhost`)
+    traefik.http.routers.jupyterhub.entrypoints: web, websecure
+    traefik.http.services.jupyterhub.loadbalancer.server.port: 8000
+services:
+  jupyterhub:
+    <<: *jupyterhub
