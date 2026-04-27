@@ -3,7 +3,7 @@ x-jupyterhub: &jupyterhub
   container_name: jupyterhub
   restart: unless-stopped
   ports:
-    - "8001:8000"
+    - "8002:8000"
   volumes:
     - ../../.localai/data/services/jupyterhub:/srv/jupyterhub
   labels:
