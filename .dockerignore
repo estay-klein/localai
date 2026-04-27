@@ -1,3 +1,4 @@
 # Avoid sending Docker data directories into the build context
 # (they can have restrictive permissions that break the build)
 services/*/docker/data
+services/*/docker/volumes
