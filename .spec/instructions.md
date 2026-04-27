@@ -16,6 +16,9 @@ LocalAI-Stack/ # Repository root (tracked source)
 │ │ ├── redis/
 │ │ ├── grafana/
 │ │ ├── searxng/
+│ │ ├── stable-diffusion/
+│ │ ├── comfyui/
+│ │ ├── invokeai/
 │ │ ├── flowise/
 │ │ ├── langflow/
 │ │ ├── jupyterhub/
@@ -121,7 +124,8 @@ Every change follows this cycle:
 ## 4. Data Persistence & Security
 - **Persistent Root:** All runtime data, models, and secrets live under `.localai/`, which is **git‑ignored**.  
   - Service‑specific data: `.localai/data/services/<service>`.  
-  - Fine‑tuned Ollama models: `.localai/models/`.  
+  - Ollama models: `.localai/models/ollama/`.  
+  - Stable Diffusion models: `.localai/data/services/stable-diffusion/` (shared with ComfyUI and InvokeAI).  
   - Secrets: `.localai/secrets/.env` (the template `.env.example` is tracked at the project root).  
 - **No environment variable** is required to locate the persistent root; the relative path is fixed to `.localai/`.  
 - **Portability:** The entire project root (including `.localai`, `.repo`, `.spec`) can be backed up or moved as a self‑contained unit.  
