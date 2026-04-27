@@ -13,3 +13,16 @@ include:
   - services/mkdocs/docker-compose-mkdocs.yaml
   - services/stable-diffusion/docker-compose-stable-diffusion.yaml
   - services/comfyui/docker-compose-comfyui.yaml
+  - services/n8n/docker-compose-n8n.yaml
+  - services/redis/docker-compose-redis.yaml
+  - services/jaeger/docker-compose-jaeger.yaml
+  - services/grafana/docker-compose-grafana.yaml
+  - services/searxng/docker-compose-searxng.yaml
+  - services/flowise/docker-compose-flowise.yaml
+  - services/langflow/docker-compose-langflow.yaml
+  - services/jupyterhub/docker-compose-jupyterhub.yaml
+  - services/localai/docker-compose-localai.yaml
+  - services/swagger-ui/docker-compose-swagger-ui.yaml
+  - services/browseruse/docker-compose-browseruse.yaml
+  - services/perplexica/docker-compose-perplexica.yaml
+  - services/supervisord/docker-compose-supervisord.yaml
