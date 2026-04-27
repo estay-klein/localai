@@ -2,3 +2,4 @@
 # (they can have restrictive permissions that break the build)
 services/*/docker/data
 services/*/docker/volumes
+.localai/
