@@ -16,27 +16,27 @@
 | Service | Role | Image | Port | Data Path | GPU Support | Profile |
 |---------|------|-------|------|-----------|-------------|---------|
 | traefik | Reverse Proxy & Load Balancer | traefik:v3.3 | 80, 443 | – | No | – |
-| ollama‑gpu | LLM Inference Engine (GPU) | ollama/ollama | 11435 | ./.docker/data/services/ollama‑gpu | Yes (NVIDIA) | gpu‑nvidia |
-| ollama‑cpu | LLM Inference Engine (CPU) | ollama/ollama | 11434 | ./.docker/data/services/ollama‑cpu | No | cpu |
-| openwebui‑gpu | Web UI for LLMs (GPU) | ghcr.io/open‑webui/open‑webui:main | 3031→8080 | ./.docker/data/services/openwebui‑gpu | Yes | gpu‑nvidia |
-| openwebui‑cpu | Web UI for LLMs (CPU) | ghcr.io/open‑webui/open‑webui:main | 3030→8080 | ./.docker/data/services/openwebui‑cpu | No | cpu |
-| n8n | Workflow Automation | n8nio/n8n:latest | 5678 | ./.docker/data/services/n8n | No | – |
-| postgres | Primary Database | postgres:16 | 5432 | ./.docker/data/services/postgres | No | – |
-| timescaledb | Time-Series Database | timescale/timescaledb:latest-pg16 | 5433→5432 | ./.docker/data/services/timescaledb | No | – |
-| pgvector | Vector-Enabled PostgreSQL | pgvector/pgvector:pg16 | 5434→5432 | ./.docker/data/services/pgvector | No | – |
-| redis | In‑Memory Cache | redis:7‑alpine | 6379 | ./.docker/data/services/redis | No | – |
+| ollama‑gpu | LLM Inference Engine (GPU) | ollama/ollama | 11435 | .localai/data/services/ollama‑gpu | Yes (NVIDIA) | gpu‑nvidia |
+| ollama‑cpu | LLM Inference Engine (CPU) | ollama/ollama | 11434 | .localai/data/services/ollama‑cpu | No | cpu |
+| openwebui‑gpu | Web UI for LLMs (GPU) | ghcr.io/open‑webui/open‑webui:main | 3031→8080 | .localai/data/services/openwebui‑gpu | Yes | gpu‑nvidia |
+| openwebui‑cpu | Web UI for LLMs (CPU) | ghcr.io/open‑webui/open‑webui:main | 3030→8080 | .localai/data/services/openwebui‑cpu | No | cpu |
+| n8n | Workflow Automation | n8nio/n8n:latest | 5678 | .localai/data/services/n8n | No | – |
+| postgres | Primary Database | postgres:16 | 5432 | .localai/data/services/postgres | No | – |
+| timescaledb | Time-Series Database | timescale/timescaledb:latest-pg16 | 5433→5432 | .localai/data/services/timescaledb | No | – |
+| pgvector | Vector-Enabled PostgreSQL | pgvector/pgvector:pg16 | 5434→5432 | .localai/data/services/pgvector | No | – |
+| redis | In‑Memory Cache | redis:7‑alpine | 6379 | .localai/data/services/redis | No | – |
 | jaeger | Distributed Tracing | jaegertracing/all‑in‑one:latest | 16686 | – | No | – |
-| grafana | Monitoring & Dashboards | grafana/grafana‑oss:latest | 3000 | ./.docker/data/services/grafana | No | – |
-| searxng | Privacy‑First Search | searxng/searxng:latest | 8080 | ./.docker/data/services/searxng | No | – |
-| flowise | Low‑Code AI Builder | flowiseai/flowise:latest | 3002 | ./.docker/data/services/flowise | No | – |
-| langflow | LangChain Visual Editor | langflowai/langflow:latest | 7860 | ./.docker/data/services/langflow | No | – |
-| jupyterhub | Jupyter Notebooks | jupyterhub/jupyterhub:latest | 8000 | ./.docker/data/services/jupyterhub | No | – |
-| localai | LocalAI Dashboard & Workspace Canvas (FastAPI+Jinja2) | custom build | 8081 | ./.docker/data/services/localai | No | – |
+| grafana | Monitoring & Dashboards | grafana/grafana‑oss:latest | 3000 | .localai/data/services/grafana | No | – |
+| searxng | Privacy‑First Search | searxng/searxng:latest | 8080 | .localai/data/services/searxng | No | – |
+| flowise | Low‑Code AI Builder | flowiseai/flowise:latest | 3002 | .localai/data/services/flowise | No | – |
+| langflow | LangChain Visual Editor | langflowai/langflow:latest | 7860 | .localai/data/services/langflow | No | – |
+| jupyterhub | Jupyter Notebooks | jupyterhub/jupyterhub:latest | 8002→8000 | .localai/data/services/jupyterhub | No | – |
+| localai | LocalAI Dashboard & Workspace Canvas (FastAPI+Jinja2) | custom build | 8081 | .localai/data/services/localai | No | – |
 | swagger‑ui | Unified API Documentation | swaggerapi/swagger‑ui | 8082 | – | No | – |
 | mkdocs | Documentation Site (Material for MkDocs + embedded Swagger UI) | custom build (`services/mkdocs/Dockerfile`) | 8001→8000 | `./docs`, `./mkdocs.yml` | No | – |
 | browseruse | Browser Automation | browseruse/browseruse:latest | 3003 | – | No | – |
-| perplexica | Perplexity‑style Search | perplexica/perplexica:latest | 3004 | ./.docker/data/services/perplexica | No | – |
-| supervisord | Process Supervision | custom build | 9001 | ./.docker/data/services/supervisord | No | – |
+| perplexica | Perplexity‑style Search | perplexica/perplexica:latest | 3004 | .localai/data/services/perplexica | No | – |
+| supervisord | Process Supervision | custom build | 9001 | .localai/data/services/supervisord | No | – |
 | supervisord‑monitor | Supervisor Monitoring Web UI | dockage/supervisor-web:2.2.0 | 80 | – | No | – |
 
 ### 3.1 LocalAI Dashboard
@@ -61,11 +61,12 @@ All persistent data lives under `.localai/data/services/` (relative to the proje
 
 ```
 project‑root/
-├── .docker/
+├── .localai/
 │   ├── data/
 │   │   └── services/
 │   │       ├── ollama‑gpu/
 │   │       ├── ollama‑cpu/
+│   │       ├── ollama‑models/
 │   │       ├── openwebui‑gpu/
 │   │       ├── openwebui‑cpu/
 │   │       ├── n8n/
@@ -90,7 +91,7 @@ project‑root/
             └── <project>/   # Future downloaded repositories
 ```
 
-**Model Storage Note:** All models for Ollama must be placed under `.localai/data/services/ollama-*` to be accessible by both CPU and GPU Ollama services. The `ollama-*` directories are effectively shared between CPU and GPU variants to avoid duplication and ensure models are available regardless of which profile is active.
+**Model Storage Note:** All models for Ollama must be placed under `.localai/data/services/ollama‑models` and are shared between CPU and GPU variants to avoid duplication.
 
 **User‑Specific Customization:** Any configuration, data, or scripts that are specific to the user executing the stack (e.g., supervisord program configurations, service‑specific runtime data, user‑uploaded files) must be placed under `.localai/data/services/<service‑name>/`. The project directory contains only generic, shareable service definitions (Dockerfiles, docker‑compose files, default configurations). This ensures that the project remains clean and portable across different users and environments.
 
@@ -101,7 +102,7 @@ All sensitive configuration is stored in `.env` files outside the repository (in
 - `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` – credentials for the PostgreSQL service.
 - `TIMESCALEDB_DB`, `TIMESCALEDB_USER`, `TIMESCALEDB_PASSWORD` – credentials for the TimescaleDB service.
 - `PGVECTOR_DB`, `PGVECTOR_USER`, `PGVECTOR_PASSWORD` – credentials for the pgvector service.
-- An so on, every variable for every service must have its own section in the `.env` file
+- And so on, every variable for every service must have its own section in the `.env` file.
 
 **No variable** is needed for the root persistent path; the stack always places data under `.localai/data/services/`. The `.localai` folder is created automatically when services start and **must be added to `.gitignore`**.
 
@@ -180,7 +181,7 @@ Swagger UI is integrated directly into the MkDocs site using the `mkdocs-swagger
 - **All Docker Compose files** must reside under `/services/`.
 - **GPU‑dependent services** must include explicit GPU passthrough configuration.
 - **Python/Bash** are the default languages; any other language requires explicit permission.
-- **Portable paths** – all persistent volumes are bound under `.docker/data/services/`. The project must exist in `/home/$user/LocalAI` while all service data lives solely inside the `.docker` directory (git‑ignored). **No large models or data inside the project directory** – they belong under `.docker/data/services/<service‑name>`.
+- **Portable paths** – all persistent volumes are bound under `.localai/data/services/`. The project must exist in `/home/$user/LocalAI` while all service data lives solely inside the `.localai` directory (git‑ignored). **No large models or data inside the project directory** – they belong under `.localai/data/services/<service‑name>`.
 - **No Inline Explanatory Comments** – Explanations must be kept in MkDocs/OpenAPI documentation, not in service or source files.
 - **No Explicit Shared Network Blocks in Service Compose Files** – Service-level compose files must rely on the merged `COMPOSE_FILE` project network.
 
@@ -192,4 +193,3 @@ A `.repo` directory at the project root is reserved for third‑party repository
 This folder is git‑ignored and serves as a staging area for scripted interactions with external repositories.
 
 ---
-

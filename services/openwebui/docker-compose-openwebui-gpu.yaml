@@ -17,7 +17,7 @@ x-openwebui-gpu: &openwebui-gpu
   extra_hosts:
     - "host.docker.internal:host-gateway"
   volumes:
-    - ./docker/volumes/openwebui-gpu:/app/backend/data
+    - ../../.localai/data/services/openwebui-gpu:/app/backend/data
   labels:
     traefik.enable: true
     traefik.http.routers.openwebui-gpu.rule: Host(`open-gpu.localhost`)
