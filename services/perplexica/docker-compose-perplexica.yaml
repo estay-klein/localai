@@ -6,6 +6,10 @@ x-perplexica: &perplexica
     - "3004:3004"
   volumes:
     - ../../.docker/data/services/perplexica:/app/data
+  environment:
+    - SEARXNG_URL=http://searxng:8080
+  depends_on:
+    - searxng
   labels:
     traefik.enable: true
     traefik.http.routers.perplexica.rule: Host(`perplexica.localhost`)
