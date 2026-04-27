@@ -1,11 +1,11 @@
 x-perplexica: &perplexica
-  image: perplexica/perplexica:latest
+  image: ghcr.io/itzcrazykns/perplexica:latest
   container_name: perplexica
   restart: unless-stopped
   ports:
     - "3004:3004"
   volumes:
-    - ../../.localai/data/services/perplexica:/app/data
+    - ../../.docker/data/services/perplexica:/app/data
   labels:
     traefik.enable: true
     traefik.http.routers.perplexica.rule: Host(`perplexica.localhost`)
