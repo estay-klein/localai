@@ -7,7 +7,7 @@ x-timescaledb: &timescaledb
     - "5433:5432"
 
   volumes:
-    - ./docker/data/timescaledb:/var/lib/postgresql/data
+    - ../../.localai/data/services/timescaledb:/var/lib/postgresql/data
 
   environment:
     - POSTGRES_DB=${TIMESCALEDB_DB:-timescale}
